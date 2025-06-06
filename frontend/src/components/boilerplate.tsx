@@ -5,7 +5,7 @@ import ThemeToggler from "@/components/theme/toggler";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site.config";
 import { signOut } from "@/lib/auth";
-import { Home, LogOut, User, Search, Heart, MessageCircle, PlusSquare } from "lucide-react";
+import { Heart, Home, LogOut, PlusSquare, Search, User } from "lucide-react";
 import { NavLink } from "react-router";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -34,7 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     {user?.name || user?.email}
                   </span>
                   <Button variant="ghost" size="sm" asChild>
-                    <NavLink to="/dashboard">
+                    <NavLink to="/settings">
                       <User className="w-4 h-4" />
                     </NavLink>
                   </Button>
@@ -54,9 +54,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* Main Content */}
-      <main className="pb-20 md:pb-8">
-        {children}
-      </main>
+      <main className="pb-20 md:pb-8">{children}</main>
 
       {/* Bottom Navigation (Mobile) */}
       {isAuthenticated && (
@@ -66,7 +64,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               to="/"
               className={({ isActive }) =>
                 `p-3 rounded-lg transition-colors ${
-                  isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+                  isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground"
                 }`
               }
             >
@@ -85,7 +85,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               to="/dashboard"
               className={({ isActive }) =>
                 `p-3 rounded-lg transition-colors ${
-                  isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+                  isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground"
                 }`
               }
             >

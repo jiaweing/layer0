@@ -66,6 +66,7 @@ Add new routes in `src/frontend/app.tsx`:
 ## 📖 Usage Examples
 
 ### Social Media Features
+
 ```tsx
 <Route path="/feed" element={<Feed />} />
 <Route path="/profile/:username" element={<Profile />} />
@@ -73,6 +74,7 @@ Add new routes in `src/frontend/app.tsx`:
 ```
 
 ### Multi-page App
+
 ```tsx
 <Route path="/products" element={<ProductList />} />
 <Route path="/products/:id" element={<ProductDetail />} />
@@ -80,15 +82,20 @@ Add new routes in `src/frontend/app.tsx`:
 ```
 
 ### Protected Routes
+
 ```tsx
-<Route path="/dashboard" element={
-  <ProtectedRoute>
-    <Dashboard />
-  </ProtectedRoute>
-} />
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
 ```
 
 ### Nested Layouts
+
 ```tsx
 <Route path="/admin" element={<AdminLayout />}>
   <Route path="users" element={<UserManagement />} />

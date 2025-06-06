@@ -6,17 +6,16 @@ import {
 } from "@tanstack/react-query";
 import {
   Heart,
+  ImageIcon,
   MessageCircle,
   MoreHorizontal,
+  Repeat2,
   Send,
   Share,
-  Repeat2,
-  ImageIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../components/providers/auth";
 import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
 import { apiService, type Post } from "../lib/api";
 
 interface PostCardProps {
@@ -78,7 +77,7 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
               {formatDate(post.createdAt)}
             </span>
           </div>
-          
+
           {/* Post Content */}
           <div className="space-y-3">
             <p className="text-foreground whitespace-pre-wrap leading-relaxed">
@@ -102,7 +101,9 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
               size="sm"
               onClick={() => onLike(post._id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors ${
-                isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+                isLiked
+                  ? "text-red-500"
+                  : "text-muted-foreground hover:text-red-500"
               }`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
@@ -119,16 +120,16 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
               <span className="text-sm font-medium">{post.commentsCount}</span>
             </Button>
 
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-green-50 dark:hover:bg-green-950/20 text-muted-foreground hover:text-green-500 transition-colors"
             >
               <Repeat2 className="w-4 h-4" />
             </Button>
 
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -136,11 +137,16 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
             </Button>
           </div>
         </div>
-        
-        <Button variant="ghost" size="sm" className="p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
           <MoreHorizontal className="w-4 h-4" />
         </Button>
-      </div>      {/* Comments Section */}
+      </div>{" "}
+      {/* Comments Section */}
       {showComments && (
         <div className="mt-4 pl-13 space-y-3">
           {/* Comment Form */}
@@ -157,9 +163,9 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
                   placeholder="Reply..."
                   className="flex-1 px-4 py-2 border border-border/50 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 bg-background text-sm"
                 />
-                <Button 
-                  type="submit" 
-                  size="sm" 
+                <Button
+                  type="submit"
+                  size="sm"
                   disabled={!commentText.trim()}
                   className="rounded-full px-4"
                 >
@@ -180,7 +186,9 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
                   <p className="font-medium text-sm text-foreground">
                     {comment.author?.name || comment.author?.email}
                   </p>
-                  <p className="text-sm text-foreground mt-1">{comment.content}</p>
+                  <p className="text-sm text-foreground mt-1">
+                    {comment.content}
+                  </p>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 ml-4">
                   {formatDate(comment.createdAt)}
@@ -228,7 +236,7 @@ function CreatePostForm({ onSubmit }: CreatePostFormProps) {
               placeholder="What's new?"
               className="w-full p-0 border-0 resize-none focus:outline-none bg-transparent text-lg placeholder:text-muted-foreground/60"
               rows={3}
-              style={{ minHeight: '60px' }}
+              style={{ minHeight: "60px" }}
             />
             {imageUrl && (
               <div className="rounded-xl overflow-hidden border border-border/50 max-w-sm">
@@ -249,16 +257,16 @@ function CreatePostForm({ onSubmit }: CreatePostFormProps) {
           </div>
         </div>
         <div className="flex justify-between items-center pl-13">
-          <Button 
+          <Button
             type="button"
-            variant="ghost" 
+            variant="ghost"
             size="sm"
             className="rounded-full p-2 hover:bg-primary/10 text-primary"
           >
             <ImageIcon className="w-4 h-4" />
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={!content.trim()}
             className="rounded-full px-6 py-2 bg-primary hover:bg-primary/90 disabled:opacity-50"
           >
@@ -359,7 +367,7 @@ export default function Feed() {
     <div className="max-w-2xl mx-auto min-h-screen bg-background">
       {/* Create Post */}
       <CreatePostForm onSubmit={handleCreatePost} />
-      
+
       {/* Posts Feed */}
       <div>
         {isLoading ? (
