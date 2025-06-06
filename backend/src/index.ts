@@ -1,7 +1,11 @@
 import { serve } from "@hono/node-server";
+import "dotenv/config";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { auth } from "./lib/auth.js";
+import commentsRoutes from "./routes/comments.js";
+import likesRoutes from "./routes/likes.js";
+import postsRoutes from "./routes/posts.js";
 
 const app = new Hono();
 
@@ -14,8 +18,13 @@ app.use(
   })
 );
 
-// Better Auth routes
-app.on(["POST", "GET"], "/api/auth/**", (c) => auth.handler(c.req.raw));
+// Social media API routes
+app.route("/api/posts", postsRoutes);
+app.route("/api/likes", likesRoutes);
+app.route("/api/comments", commentsRoutes);
+
+// Better Auth routes (must be after specific routes)
+app.use("/api/auth/*", (c) => auth.handler(c.req.raw));
 
 // Health check route
 app.get("/", (c) => {
