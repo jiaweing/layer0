@@ -1,5 +1,6 @@
 {
-  "name": "backend",
+  "name": "layer0-backend",
+  "description": "Layer0 Backend - Hono API server with authentication",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

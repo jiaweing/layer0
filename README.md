@@ -2,6 +2,8 @@
 
 A modern full-stack starter kit with Better Auth integration, featuring a Hono backend and Next.js frontend with React Router.
 
+> Built on top of [NexFaster](https://github.com/rudrodip/nexfaster) - A minimal template showcasing React Router integration within Next.js for client-side routing. Special thanks to [@rds_agi](https://github.com/rudrodip) for the innovative Next.js + React Router navigation foundation.
+
 ## Features
 
 - ✅ **Better Auth** with email/password authentication
@@ -228,6 +230,10 @@ Set `NODE_ENV=development` for additional logging and error details.
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
+
+## Acknowledgments
+
+This project builds upon [NexFaster](https://github.com/rudrodip/nexfaster) by [@rds_agi](https://github.com/rudrodip), which provides the innovative foundation for integrating React Router with Next.js for client-side routing. The original NexFaster template demonstrates how to achieve pure client-side navigation within a Next.js application.
 
 ## License
 

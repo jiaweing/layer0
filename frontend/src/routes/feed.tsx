@@ -10,6 +10,8 @@ import {
   MoreHorizontal,
   Send,
   Share,
+  Repeat2,
+  ImageIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../components/providers/auth";
@@ -59,105 +61,128 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString();
   };
-
   return (
-    <Card className="p-6 space-y-4">
+    <div className="border-b border-border/50 py-4 px-6 hover:bg-muted/30 transition-colors">
       {/* Post Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-            {post.author?.name?.[0] || post.author?.email?.[0] || "?"}
-          </div>
-          <div>
-            <p className="font-medium">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-primary/80 to-primary rounded-full flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
+          {post.author?.name?.[0] || post.author?.email?.[0] || "?"}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-semibold text-foreground truncate">
               {post.author?.name || post.author?.email}
-            </p>
-            <p className="text-sm text-muted-foreground">
+            </span>
+            <span className="text-muted-foreground text-sm">•</span>
+            <span className="text-muted-foreground text-sm">
               {formatDate(post.createdAt)}
+            </span>
+          </div>
+          
+          {/* Post Content */}
+          <div className="space-y-3">
+            <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+              {post.content}
             </p>
+            {post.imageUrl && (
+              <div className="rounded-xl overflow-hidden border border-border/50">
+                <img
+                  src={post.imageUrl}
+                  alt="Post content"
+                  className="w-full max-h-96 object-cover"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Post Actions */}
+          <div className="flex items-center justify-between mt-4 max-w-md">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onLike(post._id)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors ${
+                isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
+              <span className="text-sm font-medium">{post.likesCount}</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowComments(!showComments)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-950/20 text-muted-foreground hover:text-blue-500 transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">{post.commentsCount}</span>
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-green-50 dark:hover:bg-green-950/20 text-muted-foreground hover:text-green-500 transition-colors"
+            >
+              <Repeat2 className="w-4 h-4" />
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Share className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-        <Button variant="ghost" size="sm">
+        
+        <Button variant="ghost" size="sm" className="p-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <MoreHorizontal className="w-4 h-4" />
         </Button>
-      </div>
-
-      {/* Post Content */}
-      <div className="space-y-3">
-        <p className="text-foreground whitespace-pre-wrap">{post.content}</p>{" "}
-        {post.imageUrl && (
-          <img
-            src={post.imageUrl}
-            alt="Post content"
-            className="w-full rounded-lg max-h-96 object-cover"
-          />
-        )}
-      </div>
-
-      {/* Post Actions */}
-      <div className="flex items-center justify-between pt-2 border-t">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onLike(post._id)}
-            className={`flex items-center space-x-2 ${
-              isLiked ? "text-red-500" : ""
-            }`}
-          >
-            <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-            <span>{post.likesCount}</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center space-x-2"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>{post.commentsCount}</span>
-          </Button>
-
-          <Button variant="ghost" size="sm">
-            <Share className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Comments Section */}
+      </div>      {/* Comments Section */}
       {showComments && (
-        <div className="space-y-3 border-t pt-4">
+        <div className="mt-4 pl-13 space-y-3">
           {/* Comment Form */}
           {user && (
-            <form onSubmit={handleSubmitComment} className="flex space-x-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Write a comment..."
-                className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Button type="submit" size="sm" disabled={!commentText.trim()}>
-                <Send className="w-4 h-4" />
-              </Button>
+            <form onSubmit={handleSubmitComment} className="flex gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary/60 to-primary/40 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+                {user.name?.[0] || user.email?.[0] || "?"}
+              </div>
+              <div className="flex-1 flex gap-2">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Reply..."
+                  className="flex-1 px-4 py-2 border border-border/50 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 bg-background text-sm"
+                />
+                <Button 
+                  type="submit" 
+                  size="sm" 
+                  disabled={!commentText.trim()}
+                  className="rounded-full px-4"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
             </form>
           )}
 
           {/* Comments List */}
           {comments?.map((comment) => (
-            <div key={comment._id} className="flex space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+            <div key={comment._id} className="flex gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
                 {comment.author?.name?.[0] || comment.author?.email?.[0] || "?"}
               </div>
-              <div className="flex-1">
-                <div className="bg-muted rounded-lg px-3 py-2">
-                  <p className="font-medium text-sm">
+              <div className="flex-1 min-w-0">
+                <div className="bg-muted/50 rounded-2xl px-4 py-2">
+                  <p className="font-medium text-sm text-foreground">
                     {comment.author?.name || comment.author?.email}
                   </p>
-                  <p className="text-sm">{comment.content}</p>
+                  <p className="text-sm text-foreground mt-1">{comment.content}</p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1 ml-4">
                   {formatDate(comment.createdAt)}
                 </p>
               </div>
@@ -165,7 +190,7 @@ function PostCard({ post, onLike, onComment }: PostCardProps) {
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -190,36 +215,58 @@ function CreatePostForm({ onSubmit }: CreatePostFormProps) {
   if (!user) return null;
 
   return (
-    <Card className="p-6">
+    <div className="border-b border-border/50 py-6 px-6">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
+        <div className="flex gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary/80 to-primary rounded-full flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
             {user.name?.[0] || user.email?.[0] || "?"}
           </div>
-          <div className="flex-1">
+          <div className="flex-1 space-y-3">
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's on your mind?"
-              className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="What's new?"
+              className="w-full p-0 border-0 resize-none focus:outline-none bg-transparent text-lg placeholder:text-muted-foreground/60"
               rows={3}
+              style={{ minHeight: '60px' }}
             />
+            {imageUrl && (
+              <div className="rounded-xl overflow-hidden border border-border/50 max-w-sm">
+                <img
+                  src={imageUrl}
+                  alt="Preview"
+                  className="w-full h-32 object-cover"
+                />
+              </div>
+            )}
             <input
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Image URL (optional)"
-              className="w-full mt-2 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Add image URL (optional)"
+              className="w-full px-0 py-2 border-0 border-b border-border/30 focus:outline-none focus:border-primary/50 bg-transparent text-sm placeholder:text-muted-foreground/60"
             />
           </div>
         </div>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={!content.trim()}>
+        <div className="flex justify-between items-center pl-13">
+          <Button 
+            type="button"
+            variant="ghost" 
+            size="sm"
+            className="rounded-full p-2 hover:bg-primary/10 text-primary"
+          >
+            <ImageIcon className="w-4 h-4" />
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={!content.trim()}
+            className="rounded-full px-6 py-2 bg-primary hover:bg-primary/90 disabled:opacity-50"
+          >
             Post
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 }
 
@@ -279,75 +326,86 @@ export default function Feed() {
   const handleComment = (postId: string, content: string) => {
     commentMutation.mutate({ postId, content });
   };
-
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Welcome to Social Feed</h2>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold mb-4">Welcome to Layer0</h2>
           <p className="text-muted-foreground mb-6">
-            Please sign in to see and create posts.
+            Join the conversation. Sign in to see and create posts.
           </p>
-        </Card>
+          <Button asChild>
+            <a href="/auth">Sign In</a>
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="p-8 text-center">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="text-center py-12">
           <h2 className="text-2xl font-bold mb-4 text-red-600">Error</h2>
           <p className="text-muted-foreground">
             Failed to load posts. Please try again later.
           </p>
-        </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-8">Social Feed</h1>
+    <div className="max-w-2xl mx-auto min-h-screen bg-background">
       {/* Create Post */}
-      <div className="mb-8">
-        <CreatePostForm onSubmit={handleCreatePost} />
-      </div>{" "}
+      <CreatePostForm onSubmit={handleCreatePost} />
+      
       {/* Posts Feed */}
-      <div className="space-y-6">
+      <div>
         {isLoading ? (
-          <div className="text-center py-8">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading posts...</p>
           </div>
         ) : postsData?.pages?.[0]?.posts?.length === 0 ? (
-          <Card className="p-8 text-center">
+          <div className="text-center py-12 px-6">
             <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
             <p className="text-muted-foreground">
               Be the first to share something!
             </p>
-          </Card>
+          </div>
         ) : (
-          postsData?.pages?.map((page) =>
-            page.posts.map((post: Post) => (
-              <PostCard
-                key={post._id}
-                post={post}
-                onLike={handleLike}
-                onComment={handleComment}
-              />
-            ))
-          )
+          <div className="divide-y divide-border/50">
+            {postsData?.pages?.map((page) =>
+              page.posts.map((post: Post) => (
+                <PostCard
+                  key={post._id}
+                  post={post}
+                  onLike={handleLike}
+                  onComment={handleComment}
+                />
+              ))
+            )}
+          </div>
         )}
 
         {/* Load More Button */}
         {hasNextPage && (
-          <div className="text-center py-4">
+          <div className="text-center py-6 border-t border-border/50">
             <Button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
               variant="outline"
+              className="rounded-full px-6"
             >
-              {isFetchingNextPage ? "Loading..." : "Load More Posts"}
+              {isFetchingNextPage ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                  Loading...
+                </>
+              ) : (
+                "Load More"
+              )}
             </Button>
           </div>
         )}
