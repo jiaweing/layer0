@@ -3,8 +3,8 @@
 import NotFound from "@/app/not-found";
 import { ProtectedRoute } from "@/components/auth";
 import { Docs, Examples, Home, Layout } from "@/components/boilerplate";
-import AuthPage from "@/pages/auth";
-import Dashboard from "@/pages/dashboard";
+import AuthPage from "@/routes/auth";
+import Dashboard from "@/routes/dashboard";
 import { BrowserRouter, Route, Routes } from "react-router";
 
 export default function App() {
