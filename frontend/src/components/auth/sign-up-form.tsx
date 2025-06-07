@@ -51,7 +51,9 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
     <Card className="p-6 w-full max-w-md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <h2 className="text-2xl font-bold text-center mb-6">Sign Up</h2>
+          <h2 className="text-2xl font-semibold tracking-tighter  text-center mb-6">
+            Sign Up
+          </h2>
         </div>
 
         {error && (

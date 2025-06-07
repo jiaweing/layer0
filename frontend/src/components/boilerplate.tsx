@@ -22,7 +22,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <NavLink to="/" className="text-2xl font-bold text-primary">
+            <NavLink
+              to="/"
+              className="text-2xl font-semibold tracking-tighter  text-primary"
+            >
               {siteConfig.name}
             </NavLink>
 

@@ -338,7 +338,9 @@ export default function Feed() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">Welcome to Layer0</h2>
+          <h2 className="text-2xl font-semibold tracking-tighter  mb-4">
+            Welcome to Layer0
+          </h2>
           <p className="text-muted-foreground mb-6">
             Join the conversation. Sign in to see and create posts.
           </p>
@@ -354,7 +356,9 @@ export default function Feed() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4 text-red-600">Error</h2>
+          <h2 className="text-2xl font-semibold tracking-tighter  mb-4 text-red-600">
+            Error
+          </h2>
           <p className="text-muted-foreground">
             Failed to load posts. Please try again later.
           </p>

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,7 +42,9 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
     <Card className="p-6 w-full max-w-md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <h2 className="text-2xl font-bold text-center mb-6">Sign In</h2>
+          <h2 className="text-2xl font-semibold tracking-tighter  text-center mb-6">
+            Sign In
+          </h2>
         </div>
 
         {error && (
