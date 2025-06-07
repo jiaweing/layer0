@@ -4,12 +4,13 @@
   "description": "Layer 0 starter kit with Better Auth",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"cd backend && pnpm dev\" \"cd frontend && pnpm dev\"",
+    "dev": "concurrently \"cd backend && pnpm dev\" \"cd frontend && pnpm dev\" \"cd docs && pnpm dev\"",
     "dev:backend": "cd backend && pnpm dev",
     "dev:frontend": "cd frontend && pnpm dev",
-    "build": "cd backend && pnpm build && cd ../frontend && pnpm build",
-    "install:all": "cd backend && pnpm install && cd ../frontend && pnpm install",
-    "type-check": "cd backend && npx tsc --noEmit && cd ../frontend && npx tsc --noEmit"
+    "dev:docs": "cd docs && pnpm dev",
+    "build": "cd backend && pnpm build && cd ../frontend && pnpm build && cd ../docs && pnpm build",
+    "install:all": "cd backend && pnpm install && cd ../frontend && pnpm install && cd ../docs && pnpm install",
+    "type-check": "cd backend && npx tsc --noEmit && cd ../frontend && npx tsc --noEmit && cd ../docs && npx tsc --noEmit"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
