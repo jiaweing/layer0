@@ -28,8 +28,9 @@ class DatabaseConnection {
     }
 
     try {
-      const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/layer0-auth";
-      
+      const mongoUri =
+        process.env.MONGODB_URI || "mongodb://localhost:27017/layer0-auth";
+
       await mongoose.connect(mongoUri, {
         dbName: "layer0-auth",
       });
@@ -69,23 +70,27 @@ class DatabaseConnection {
 // User service using Mongoose native MongoDB driver access
 export class UserService {
   private static userCollection = "user"; // Better Auth collection name
-  
-  public static async findUserById(authId: string): Promise<UserDocument | null> {
+
+  public static async findUserById(
+    authId: string
+  ): Promise<UserDocument | null> {
     try {
       const dbInstance = DatabaseConnection.getInstance();
       if (!dbInstance.isConnectionReady()) {
         await dbInstance.connect();
       }
-      
+
       const db = dbInstance.getConnection().db;
       if (!db) {
         throw new Error("Database connection not available");
       }
-      
+
       // Convert string ID to ObjectId for MongoDB query
       const objectId = new mongoose.Types.ObjectId(authId);
-      const user = await db.collection(this.userCollection).findOne({ _id: objectId });
-      
+      const user = await db
+        .collection(this.userCollection)
+        .findOne({ _id: objectId });
+
       if (!user) return null;
 
       return {
@@ -101,28 +106,33 @@ export class UserService {
       return null;
     }
   }
-  
-  public static async findUsersByIds(authIds: string[]): Promise<Record<string, UserDocument>> {
+
+  public static async findUsersByIds(
+    authIds: string[]
+  ): Promise<Record<string, UserDocument>> {
     try {
       const dbInstance = DatabaseConnection.getInstance();
       if (!dbInstance.isConnectionReady()) {
         await dbInstance.connect();
       }
-      
+
       const db = dbInstance.getConnection().db;
       if (!db) {
         throw new Error("Database connection not available");
       }
-      
+
       // Convert string IDs to ObjectIds for MongoDB query
-      const objectIds = authIds.map(id => new mongoose.Types.ObjectId(id));
-      const users = await db.collection(this.userCollection).find({ 
-        _id: { $in: objectIds } 
-      }).toArray();
-      
+      const objectIds = authIds.map((id) => new mongoose.Types.ObjectId(id));
+      const users = await db
+        .collection(this.userCollection)
+        .find({
+          _id: { $in: objectIds },
+        })
+        .toArray();
+
       const userMap: Record<string, UserDocument> = {};
-      
-      users.forEach(user => {
+
+      users.forEach((user) => {
         // Use string representation of ObjectId as key
         const userIdString = user._id.toString();
         userMap[userIdString] = {
@@ -145,7 +155,7 @@ export class UserService {
   public static transformToApiUser(user: UserDocument) {
     return {
       _id: user._id.toString(),
-      name: user.name || user.email.split('@')[0], // fallback to email prefix if no name
+      name: user.name || user.email.split("@")[0], // fallback to email prefix if no name
       email: user.email,
     };
   }

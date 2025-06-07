@@ -11,19 +11,23 @@ async function enrichCommentsWithAuthors(comments: any[]) {
   if (!comments.length) return comments;
 
   // Get unique author IDs
-  const authorIds = [...new Set(comments.map(comment => comment.authorAuthId))];
-  
+  const authorIds = [
+    ...new Set(comments.map((comment) => comment.authorAuthId)),
+  ];
+
   // Fetch users using the UserService
   const userMap = await UserService.findUsersByIds(authorIds);
 
   // Enrich comments with author data
-  return comments.map(comment => ({
+  return comments.map((comment) => ({
     ...comment,
-    author: userMap[comment.authorAuthId] ? UserService.transformToApiUser(userMap[comment.authorAuthId]) : {
-      _id: comment.authorAuthId,
-      name: "Unknown User",
-      email: "unknown@example.com",
-    }
+    author: userMap[comment.authorAuthId]
+      ? UserService.transformToApiUser(userMap[comment.authorAuthId])
+      : {
+          _id: comment.authorAuthId,
+          name: "Unknown User",
+          email: "unknown@example.com",
+        },
   }));
 }
 

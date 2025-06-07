@@ -7,9 +7,9 @@ const app = new Hono();
 app.get("/:authId", async (c) => {
   try {
     const authId = c.req.param("authId");
-    
+
     const user = await UserService.findUserById(authId);
-    
+
     if (!user) {
       return c.json({ error: "User not found" }, 404);
     }
@@ -26,16 +26,16 @@ app.post("/batch", async (c) => {
   try {
     const body = await c.req.json();
     const { authIds } = body;
-    
+
     if (!Array.isArray(authIds)) {
       return c.json({ error: "authIds must be an array" }, 400);
     }
 
     const userMap = await UserService.findUsersByIds(authIds);
-    
+
     // Transform to API format
     const transformedUsers: Record<string, any> = {};
-    Object.keys(userMap).forEach(id => {
+    Object.keys(userMap).forEach((id) => {
       transformedUsers[id] = UserService.transformToApiUser(userMap[id]);
     });
 

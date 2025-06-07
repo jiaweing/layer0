@@ -11,19 +11,21 @@ async function enrichPostsWithAuthors(posts: any[]) {
   if (!posts.length) return posts;
 
   // Get unique author IDs
-  const authorIds = [...new Set(posts.map(post => post.authorAuthId))];
-  
+  const authorIds = [...new Set(posts.map((post) => post.authorAuthId))];
+
   // Fetch users using the UserService
   const userMap = await UserService.findUsersByIds(authorIds);
 
   // Enrich posts with author data
-  return posts.map(post => ({
+  return posts.map((post) => ({
     ...post,
-    author: userMap[post.authorAuthId] ? UserService.transformToApiUser(userMap[post.authorAuthId]) : {
-      _id: post.authorAuthId,
-      name: "Unknown User",
-      email: "unknown@example.com",
-    }
+    author: userMap[post.authorAuthId]
+      ? UserService.transformToApiUser(userMap[post.authorAuthId])
+      : {
+          _id: post.authorAuthId,
+          name: "Unknown User",
+          email: "unknown@example.com",
+        },
   }));
 }
 
@@ -58,7 +60,7 @@ app.get("/", async (c) => {
 
     return c.json({
       ...result,
-      posts: enrichedPosts
+      posts: enrichedPosts,
     });
   } catch (error) {
     console.error("Error fetching posts:", error);
@@ -108,7 +110,7 @@ app.get("/:postId", async (c) => {
 
     // Enrich post with author information
     const enrichedPosts = await enrichPostsWithAuthors([post]);
-    
+
     return c.json({ post: enrichedPosts[0] });
   } catch (error) {
     console.error("Error fetching post:", error);
