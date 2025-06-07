@@ -38,11 +38,12 @@ export function CreateGroupDialog({ open, onOpenChange, onGroupCreated }: Create
       setSlug(generateSlug(value));
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");    try {
+    setError("");
+
+    try {
       // Check if slug is available
       const slugCheck = await authClient.organization.checkSlug({ slug });
       if (slugCheck.error || !slugCheck.data?.status) {
@@ -50,23 +51,24 @@ export function CreateGroupDialog({ open, onOpenChange, onGroupCreated }: Create
         return;
       }
 
-      // Create the organization
-      const result = await authClient.organization.create({
-        name,
-        slug,
+      // Initiate Polar checkout for group creation ($20)
+      const checkoutResult = await authClient.checkout({
+        slug: "group-creation", // Use the slug configured in auth-server
+        metadata: {
+          groupName: name,
+          groupSlug: slug,
+          action: "create-group"
+        }
       });
 
-      if (result.error) {
-        setError(result.error.message || "Failed to create group. Please try again.");
+      if (checkoutResult.error) {
+        setError("Failed to initiate payment. Please try again.");
         return;
-      }      // Reset form and close dialog
-      setName("");
-      setSlug("");
-      onOpenChange(false);
-      
-      // Refresh the groups list
-      if (onGroupCreated) {
-        onGroupCreated();
+      }
+
+      // Redirect to Polar checkout
+      if (checkoutResult.data?.url) {
+        window.location.href = checkoutResult.data.url;
       }
     } catch (error: any) {
       setError(error.message || "Failed to create group. Please try again.");
@@ -83,11 +85,13 @@ export function CreateGroupDialog({ open, onOpenChange, onGroupCreated }: Create
       onOpenChange(false);
     }
   };
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
+  return (    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Group</DialogTitle>
+          <DialogTitle>Create New Group - $20</DialogTitle>
+          <p className="text-sm text-gray-600 mt-2">
+            Creating a group costs $20. You'll be redirected to complete the payment and your group will be created after successful payment.
+          </p>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,12 +149,11 @@ export function CreateGroupDialog({ open, onOpenChange, onGroupCreated }: Create
               disabled={isLoading}
             >
               Cancel
-            </Button>
-            <Button
+            </Button>            <Button
               type="submit"
               disabled={isLoading || !name.trim() || !slug.trim()}
             >
-              {isLoading ? "Creating..." : "Create Group"}
+              {isLoading ? "Processing..." : "Pay $20 & Create Group"}
             </Button>
           </DialogFooter>
         </form>
