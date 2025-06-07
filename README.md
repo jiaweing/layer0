@@ -831,6 +831,7 @@ Before suggesting new features:
 ## 🎯 Roadmap
 
 ### 🚀 Current Version (v1.0)
+
 - ✅ Better Auth with MongoDB integration
 - ✅ Convex real-time database for social features
 - ✅ AWS S3 file upload and storage
@@ -842,6 +843,7 @@ Before suggesting new features:
 ### 📅 Upcoming Features
 
 #### v1.1 - Enhanced Social Features
+
 - [ ] **Post Comments & Replies** - Nested comment system
 - [ ] **Real-time Notifications** - Live activity updates
 - [ ] **User Following/Followers** - Social connections
@@ -849,6 +851,7 @@ Before suggesting new features:
 - [ ] **Image Galleries** - Multiple images per post
 
 #### v1.2 - Advanced Authentication
+
 - [ ] **OAuth Providers** - Google, GitHub, Twitter login
 - [ ] **Two-Factor Authentication** - Enhanced security
 - [ ] **Email Verification** - Account verification system
@@ -856,6 +859,7 @@ Before suggesting new features:
 - [ ] **Session Management** - Better session controls
 
 #### v1.3 - Performance & Scaling
+
 - [ ] **Edge Caching** - CDN integration
 - [ ] **Image Optimization** - Automatic image processing
 - [ ] **Rate Limiting** - API protection
@@ -863,6 +867,7 @@ Before suggesting new features:
 - [ ] **Monitoring** - Performance tracking
 
 #### v2.0 - Enterprise Features
+
 - [ ] **Multi-tenancy** - Support for multiple organizations
 - [ ] **Advanced Analytics** - User engagement metrics
 - [ ] **Content Moderation** - AI-powered content filtering
@@ -870,6 +875,7 @@ Before suggesting new features:
 - [ ] **Mobile App** - React Native companion app
 
 ### 🎨 Design System Evolution
+
 - [ ] **Component Library** - Standalone design system
 - [ ] **Animation System** - Smooth transitions and micro-interactions
 - [ ] **Accessibility** - WCAG 2.1 AA compliance
@@ -878,18 +884,21 @@ Before suggesting new features:
 ## 📚 Resources & Learning
 
 ### 📖 Documentation
+
 - [Better Auth Docs](https://better-auth.com/docs) - Authentication system
 - [Convex Docs](https://docs.convex.dev/) - Real-time database
 - [Next.js Docs](https://nextjs.org/docs) - React framework
 - [Tailwind CSS](https://tailwindcss.com/docs) - Styling framework
 
 ### 🎓 Tutorials & Guides
+
 - [Building Real-time Apps with Convex](https://docs.convex.dev/tutorial)
 - [Next.js App Router Guide](https://nextjs.org/docs/app)
 - [Better Auth Setup Guide](https://better-auth.com/docs/guides)
 - [AWS S3 Integration](https://docs.aws.amazon.com/sdk-for-javascript/)
 
 ### 🔧 Development Tools
+
 - [VS Code](https://code.visualstudio.com/) - Recommended IDE
 - [Convex Dashboard](https://dashboard.convex.dev/) - Database management
 - [MongoDB Compass](https://www.mongodb.com/products/compass) - Database GUI
@@ -898,9 +907,11 @@ Before suggesting new features:
 ## 🌟 Showcase
 
 ### 🎨 Built with Layer0
-*Share your projects built with Layer0! Submit a PR to add your project here.*
+
+_Share your projects built with Layer0! Submit a PR to add your project here._
 
 ### 📸 Screenshots
+
 <div align="center">
   <img src="docs/images/dashboard.png" alt="Dashboard" width="300"/>
   <img src="docs/images/profile.png" alt="Profile" width="300"/>
@@ -910,10 +921,13 @@ Before suggesting new features:
 ## 🙏 Acknowledgments
 
 ### 🏗️ Foundation
+
 This project builds upon [NexFaster](https://github.com/rudrodip/nexfaster) by [@rds_agi](https://github.com/rudrodip), which provides the innovative foundation for integrating React Router with Next.js for client-side routing.
 
 ### 🛠️ Technologies
+
 Special thanks to the teams behind:
+
 - **Next.js** - The React framework for production
 - **Better Auth** - Simple, secure authentication
 - **Convex** - Real-time backend platform
@@ -922,6 +936,7 @@ Special thanks to the teams behind:
 - **shadcn/ui** - Beautiful component library
 
 ### 🎨 Design Inspiration
+
 - [Linear](https://linear.app/) - Clean, modern interface design
 - [Twitter/X](https://x.com/) - Social media UX patterns
 - [Discord](https://discord.com/) - Real-time messaging UI
@@ -933,9 +948,9 @@ Special thanks to the teams behind:
     <strong>Layer0</strong> - Built with ❤️ for the developer community
   </p>
   <p>
-    <a href="https://github.com/layer0/starter-kit">⭐ Star on GitHub</a> •
-    <a href="https://github.com/layer0/starter-kit/issues">🐛 Report Bug</a> •
-    <a href="https://github.com/layer0/starter-kit/discussions">💬 Discussions</a>
+    <a href="https://github.com/jiaweing/layer0">⭐ Star on GitHub</a> •
+    <a href="https://github.com/jiaweing/layer0/issues">🐛 Report Bug</a> •
+    <a href="https://github.com/jiaweing/layer0/discussions">💬 Discussions</a>
   </p>
 </div>
 

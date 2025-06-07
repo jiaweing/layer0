@@ -18,11 +18,11 @@ export const siteConfig: SiteConfig = {
   ],
   og: "http://localhost:3000/og.png",
   creator: {
-    name: "Layer0",
-    url: "https://github.com/layer0",
+    name: "Jia Wei Ng",
+    url: "https://github.com/jiaweing",
   },
   socials: {
-    github: "https://github.com/layer0/starter-kit",
-    x: "https://x.com/layer0kit",
+    github: "https://github.com/jiaweing/layer0",
+    x: "https://x.com/j14wei",
   },
 };
