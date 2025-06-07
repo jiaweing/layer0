@@ -18,8 +18,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-4xl mx-auto px-4">
+      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
+        <div className="px-6">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <NavLink
