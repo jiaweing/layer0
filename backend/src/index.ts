@@ -3,9 +3,11 @@ import "dotenv/config";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { auth } from "./lib/auth.js";
+import { database } from "./lib/database.js";
 import commentsRoutes from "./routes/comments.js";
 import likesRoutes from "./routes/likes.js";
 import postsRoutes from "./routes/posts.js";
+import usersRoutes from "./routes/users.js";
 
 const app = new Hono();
 
@@ -22,6 +24,7 @@ app.use(
 app.route("/api/posts", postsRoutes);
 app.route("/api/likes", likesRoutes);
 app.route("/api/comments", commentsRoutes);
+app.route("/api/users", usersRoutes);
 
 // Better Auth routes (must be after specific routes)
 app.use("/api/auth/*", (c) => auth.handler(c.req.raw));
@@ -45,6 +48,9 @@ app.get("/api/me", async (c) => {
 });
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3001;
+
+// Initialize database connection
+database.connect().catch(console.error);
 
 serve(
   {

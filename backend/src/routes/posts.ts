@@ -2,8 +2,30 @@ import { Hono } from "hono";
 import { api } from "../../convex/_generated/api.js";
 import { auth } from "../lib/auth.js";
 import { convex } from "../lib/convex.js";
+import { UserService } from "../lib/database.js";
 
 const app = new Hono();
+
+// Helper function to enrich posts with author information
+async function enrichPostsWithAuthors(posts: any[]) {
+  if (!posts.length) return posts;
+
+  // Get unique author IDs
+  const authorIds = [...new Set(posts.map(post => post.authorAuthId))];
+  
+  // Fetch users using the UserService
+  const userMap = await UserService.findUsersByIds(authorIds);
+
+  // Enrich posts with author data
+  return posts.map(post => ({
+    ...post,
+    author: userMap[post.authorAuthId] ? UserService.transformToApiUser(userMap[post.authorAuthId]) : {
+      _id: post.authorAuthId,
+      name: "Unknown User",
+      email: "unknown@example.com",
+    }
+  }));
+}
 
 // Helper function to get authenticated user
 async function getAuthenticatedUser(c: any) {
@@ -31,7 +53,13 @@ app.get("/", async (c) => {
       cursor,
     });
 
-    return c.json(result);
+    // Enrich posts with author information
+    const enrichedPosts = await enrichPostsWithAuthors(result.posts);
+
+    return c.json({
+      ...result,
+      posts: enrichedPosts
+    });
   } catch (error) {
     console.error("Error fetching posts:", error);
     return c.json({ error: "Failed to fetch posts" }, 500);
@@ -78,7 +106,10 @@ app.get("/:postId", async (c) => {
       return c.json({ error: "Post not found" }, 404);
     }
 
-    return c.json({ post });
+    // Enrich post with author information
+    const enrichedPosts = await enrichPostsWithAuthors([post]);
+    
+    return c.json({ post: enrichedPosts[0] });
   } catch (error) {
     console.error("Error fetching post:", error);
     return c.json({ error: "Failed to fetch post" }, 500);
@@ -118,7 +149,10 @@ app.get("/user/:authId", async (c) => {
       limit,
     });
 
-    return c.json({ posts });
+    // Enrich posts with author information
+    const enrichedPosts = await enrichPostsWithAuthors(posts);
+
+    return c.json({ posts: enrichedPosts });
   } catch (error) {
     console.error("Error fetching user posts:", error);
     return c.json({ error: "Failed to fetch user posts" }, 500);
