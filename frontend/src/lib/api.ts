@@ -86,10 +86,7 @@ export const apiService = {
     const response = await api.post("/api/posts", postData);
     return response.data;
   },
-  getPosts: async (
-    cursor?: number,
-    limit = 20
-  ): Promise<PostsResponse> => {
+  getPosts: async (cursor?: number, limit = 20): Promise<PostsResponse> => {
     const params = new URLSearchParams();
     if (cursor) params.append("cursor", cursor.toString());
     params.append("limit", limit.toString());
@@ -129,10 +126,7 @@ export const apiService = {
     const response = await api.post(`/api/comments/${postId}`, { content });
     return response.data;
   },
-  getPostComments: async (
-    postId: string,
-    limit = 50
-  ): Promise<Comment[]> => {
+  getPostComments: async (postId: string, limit = 50): Promise<Comment[]> => {
     const response = await api.get(`/api/comments/${postId}?limit=${limit}`);
     return response.data;
   },

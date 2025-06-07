@@ -171,18 +171,16 @@ export class UserService {
       }
 
       const objectId = new mongoose.Types.ObjectId(authId);
-      const result = await db
-        .collection(this.userCollection)
-        .findOneAndUpdate(
-          { _id: objectId },
-          {
-            $set: {
-              image: avatarUrl,
-              updatedAt: new Date(),
-            },
+      const result = await db.collection(this.userCollection).findOneAndUpdate(
+        { _id: objectId },
+        {
+          $set: {
+            image: avatarUrl,
+            updatedAt: new Date(),
           },
-          { returnDocument: "after" }
-        );
+        },
+        { returnDocument: "after" }
+      );
 
       if (!result || !result.value) return null;
 
@@ -217,16 +215,14 @@ export class UserService {
       }
 
       const objectId = new mongoose.Types.ObjectId(authId);
-      const result = await db
-        .collection(this.userCollection)
-        .findOneAndUpdate(
-          { _id: objectId },
-          {
-            $unset: { image: "" },
-            $set: { updatedAt: new Date() },
-          },
-          { returnDocument: "after" }
-        );
+      const result = await db.collection(this.userCollection).findOneAndUpdate(
+        { _id: objectId },
+        {
+          $unset: { image: "" },
+          $set: { updatedAt: new Date() },
+        },
+        { returnDocument: "after" }
+      );
 
       if (!result || !result.value) return null;
 

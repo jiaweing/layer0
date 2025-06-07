@@ -169,7 +169,7 @@ export default function ProfileAvatar({
       setIsDialogOpen(false);
       removeFile(fileId);
       setCroppedAreaPixels(null);
-      setZoom(1);      // Notify parent component if callback provided
+      setZoom(1); // Notify parent component if callback provided
       if (onAvatarChange) {
         onAvatarChange(currentAvatar || null);
       }
@@ -257,7 +257,6 @@ export default function ProfileAvatar({
           tabIndex={-1}
         />
       </div>
-
       {/* Status text */}
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
@@ -275,7 +274,6 @@ export default function ProfileAvatar({
           </p>
         )}
       </div>
-
       {/* Cropper Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="gap-0 p-0 sm:max-w-140 *:[button]:hidden">
@@ -314,7 +312,8 @@ export default function ProfileAvatar({
               </Button>
             </DialogTitle>
           </DialogHeader>
-          {previewUrl && (            <Cropper
+          {previewUrl && (
+            <Cropper
               className="h-96 sm:h-120"
               image={previewUrl}
               zoom={zoom}
@@ -350,6 +349,7 @@ export default function ProfileAvatar({
             </div>
           </DialogFooter>
         </DialogContent>
-      </Dialog>    </div>
+      </Dialog>{" "}
+    </div>
   );
 }

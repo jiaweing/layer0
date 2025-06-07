@@ -90,7 +90,9 @@ function SettingsPage() {
                   Upload and manage your profile picture
                 </CardDescription>
               </CardHeader>
-              <div className="px-6 pb-6 flex justify-center">                <ProfileAvatar
+              <div className="px-6 pb-6 flex justify-center">
+                {" "}
+                <ProfileAvatar
                   currentAvatar={user?.image}
                   onAvatarChange={() => {
                     // Avatar update is handled automatically by the hook

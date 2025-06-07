@@ -1,7 +1,7 @@
 import { Hono } from "hono";
+import multer from "multer";
 import { UserService } from "../lib/database.js";
 import { S3Service } from "../lib/s3.js";
-import multer from "multer";
 
 const app = new Hono();
 
@@ -12,10 +12,10 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error("Only image files are allowed"));
     }
   },
 });
@@ -67,17 +67,17 @@ app.post("/batch", async (c) => {
 app.post("/:authId/avatar", async (c) => {
   try {
     const authId = c.req.param("authId");
-    
+
     // Parse multipart form data
     const formData = await c.req.formData();
-    const file = formData.get('avatar') as File;
-    
+    const file = formData.get("avatar") as File;
+
     if (!file) {
       return c.json({ error: "No file provided" }, 400);
     }
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       return c.json({ error: "Only image files are allowed" }, 400);
     }
 

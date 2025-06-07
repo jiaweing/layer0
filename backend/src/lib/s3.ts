@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const s3Client = new S3Client({
@@ -20,7 +24,7 @@ export class S3Service {
     folder: string = "avatars"
   ): Promise<string> {
     const key = `${folder}/${Date.now()}-${fileName}`;
-    
+
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
@@ -32,12 +36,14 @@ export class S3Service {
 
     try {
       await s3Client.send(command);
-      
+
       // Return URL (use CloudFront if available, otherwise S3 URL)
       if (CDN_URL) {
         return `${CDN_URL}/${key}`;
       }
-      return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || "us-east-1"}.amazonaws.com/${key}`;
+      return `https://${BUCKET_NAME}.s3.${
+        process.env.AWS_REGION || "us-east-1"
+      }.amazonaws.com/${key}`;
     } catch (error) {
       console.error("Error uploading file to S3:", error);
       throw new Error("Failed to upload file");
@@ -74,7 +80,7 @@ export class S3Service {
     folder: string = "avatars"
   ): Promise<{ uploadUrl: string; fileUrl: string }> {
     const key = `${folder}/${Date.now()}-${fileName}`;
-    
+
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
@@ -88,9 +94,11 @@ export class S3Service {
         expiresIn: 300, // 5 minutes
       });
 
-      const fileUrl = CDN_URL 
+      const fileUrl = CDN_URL
         ? `${CDN_URL}/${key}`
-        : `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || "us-east-1"}.amazonaws.com/${key}`;
+        : `https://${BUCKET_NAME}.s3.${
+            process.env.AWS_REGION || "us-east-1"
+          }.amazonaws.com/${key}`;
 
       return { uploadUrl, fileUrl };
     } catch (error) {
