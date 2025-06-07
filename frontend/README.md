@@ -31,7 +31,7 @@ Layer0 combines Next.js with React Router for pure client-side routing:
 - `src/app/shell/page.tsx` - Loads React Router app
 - `src/frontend/app.tsx` - Main React Router application
 - `src/config/site.config.ts` - Site configuration
-- `src/components/boilerplate.tsx` - Layout and page components
+- `src/components/layout.tsx` - Layout and page components
 
 ## 🔧 Adding Routes
 

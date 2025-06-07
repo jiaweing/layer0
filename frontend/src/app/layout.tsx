@@ -3,7 +3,7 @@ import { siteConfig } from "@/config/site.config";
 import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
 const fontSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +15,8 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const fontHeading = Inter({
-  variable: "--font-inter",
+const fontHeading = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 

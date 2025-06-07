@@ -24,7 +24,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Logo */}
             <NavLink
               to="/"
-              className="text-2xl font-semibold tracking-tighter  text-primary"
+              className="text-xl font-medium tracking-tighter text-primary"
             >
               {siteConfig.name}
             </NavLink>

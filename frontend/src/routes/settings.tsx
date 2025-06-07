@@ -1,6 +1,7 @@
 "use client";
 
 import { ProtectedRoute } from "@/components/auth";
+import ProfileAvatar from "@/components/profile-avatar";
 import { useAuth } from "@/components/providers/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,7 +57,7 @@ function SettingsPage() {
       <div className="min-h-screen">
         {/* Header */}
         <div className="shadow-sm border-b">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold">Settings</h1>
@@ -76,8 +77,31 @@ function SettingsPage() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          {/* Profile Avatar Section */}
+          <div className="flex justify-center">
+            <Card className="w-full max-w-md">
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center gap-2">
+                  <User className="h-5 w-5" />
+                  Profile Avatar
+                </CardTitle>
+                <CardDescription>
+                  Upload and manage your profile picture
+                </CardDescription>
+              </CardHeader>
+              <div className="px-6 pb-6 flex justify-center">                <ProfileAvatar
+                  currentAvatar={user?.image}
+                  onAvatarChange={() => {
+                    // Avatar update is handled automatically by the hook
+                  }}
+                />
+              </div>
+            </Card>
+          </div>
+
+          {/* Information Cards Grid */}
+          <div className="grid gap-6 lg:grid-cols-2">
             {/* User Information Card */}
             <Card className="h-fit">
               <CardHeader>
@@ -155,7 +179,7 @@ function SettingsPage() {
                     <img
                       src={user.image}
                       alt="Profile"
-                      className="h-8 w-8 rounded-full"
+                      className="h-8 w-8 rounded-full object-cover"
                     />
                   </div>
                 )}
@@ -254,7 +278,7 @@ function SettingsPage() {
           </div>
 
           {/* Actions */}
-          <div className="mt-8 flex justify-center">
+          <div className="flex justify-center">
             <Button
               onClick={handleSignOut}
               variant="destructive"

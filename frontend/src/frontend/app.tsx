@@ -1,7 +1,7 @@
 "use client";
 
 import NotFound from "@/app/not-found";
-import { Layout } from "@/components/boilerplate";
+import { Layout } from "@/components/layout";
 import AuthPage from "@/routes/auth";
 import Feed from "@/routes/feed";
 import SettingsPage from "@/routes/settings";

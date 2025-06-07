@@ -15,7 +15,7 @@ export interface User {
   _id: string;
   name?: string;
   email: string;
-  avatar?: string;
+  image?: string;
   bio?: string;
 }
 
@@ -48,7 +48,7 @@ export const apiService = {
   getOrCreateUser: async (userData: {
     email: string;
     name?: string;
-    avatar?: string;
+    image?: string; // Updated to match backend
   }) => {
     const response = await api.post("/api/users/profile", userData);
     return response.data;
@@ -57,10 +57,28 @@ export const apiService = {
   updateProfile: async (userData: {
     name?: string;
     bio?: string;
-    avatar?: string;
+    image?: string; // Updated to match backend
   }) => {
     const response = await api.put("/api/users/profile", userData);
     return response.data;
+  },
+
+  // Avatar management
+  uploadAvatar: async (authId: string, file: File): Promise<User> => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const response = await api.post(`/api/users/${authId}/avatar`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data.user;
+  },
+
+  removeAvatar: async (authId: string): Promise<User> => {
+    const response = await api.delete(`/api/users/${authId}/avatar`);
+    return response.data.user;
   },
 
   // Posts
@@ -68,10 +86,9 @@ export const apiService = {
     const response = await api.post("/api/posts", postData);
     return response.data;
   },
-
   getPosts: async (
     cursor?: number,
-    limit: number = 20
+    limit = 20
   ): Promise<PostsResponse> => {
     const params = new URLSearchParams();
     if (cursor) params.append("cursor", cursor.toString());
@@ -112,15 +129,13 @@ export const apiService = {
     const response = await api.post(`/api/comments/${postId}`, { content });
     return response.data;
   },
-
   getPostComments: async (
     postId: string,
-    limit: number = 50
+    limit = 50
   ): Promise<Comment[]> => {
     const response = await api.get(`/api/comments/${postId}?limit=${limit}`);
     return response.data;
   },
-
   deleteComment: async (commentId: string) => {
     const response = await api.delete(`/api/comments/${commentId}`);
     return response.data;

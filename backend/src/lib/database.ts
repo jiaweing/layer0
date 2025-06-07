@@ -5,6 +5,7 @@ interface UserDocument {
   name?: string;
   email: string;
   emailVerified?: boolean;
+  image?: string; // Add avatar field
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -98,6 +99,7 @@ export class UserService {
         name: user.name,
         email: user.email,
         emailVerified: user.emailVerified,
+        image: user.image,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       };
@@ -140,6 +142,7 @@ export class UserService {
           name: user.name,
           email: user.email,
           emailVerified: user.emailVerified,
+          image: user.image,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         };
@@ -152,11 +155,103 @@ export class UserService {
     }
   }
 
+  public static async updateUserAvatar(
+    authId: string,
+    avatarUrl: string
+  ): Promise<UserDocument | null> {
+    try {
+      const dbInstance = DatabaseConnection.getInstance();
+      if (!dbInstance.isConnectionReady()) {
+        await dbInstance.connect();
+      }
+
+      const db = dbInstance.getConnection().db;
+      if (!db) {
+        throw new Error("Database connection not available");
+      }
+
+      const objectId = new mongoose.Types.ObjectId(authId);
+      const result = await db
+        .collection(this.userCollection)
+        .findOneAndUpdate(
+          { _id: objectId },
+          {
+            $set: {
+              image: avatarUrl,
+              updatedAt: new Date(),
+            },
+          },
+          { returnDocument: "after" }
+        );
+
+      if (!result || !result.value) return null;
+
+      const user = result.value;
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        image: user.image,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    } catch (error) {
+      console.error("Error updating user avatar:", error);
+      return null;
+    }
+  }
+
+  public static async removeUserAvatar(
+    authId: string
+  ): Promise<UserDocument | null> {
+    try {
+      const dbInstance = DatabaseConnection.getInstance();
+      if (!dbInstance.isConnectionReady()) {
+        await dbInstance.connect();
+      }
+
+      const db = dbInstance.getConnection().db;
+      if (!db) {
+        throw new Error("Database connection not available");
+      }
+
+      const objectId = new mongoose.Types.ObjectId(authId);
+      const result = await db
+        .collection(this.userCollection)
+        .findOneAndUpdate(
+          { _id: objectId },
+          {
+            $unset: { image: "" },
+            $set: { updatedAt: new Date() },
+          },
+          { returnDocument: "after" }
+        );
+
+      if (!result || !result.value) return null;
+
+      const user = result.value;
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        image: user.image,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    } catch (error) {
+      console.error("Error removing user avatar:", error);
+      return null;
+    }
+  }
+
   public static transformToApiUser(user: UserDocument) {
     return {
       _id: user._id.toString(),
       name: user.name || user.email.split("@")[0], // fallback to email prefix if no name
       email: user.email,
+      image: user.image,
     };
   }
 }

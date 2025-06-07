@@ -9,9 +9,12 @@
     "convex": "convex dev --once"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.826.0",
+    "@aws-sdk/s3-request-presigner": "^3.826.0",
     "@hono/node-server": "^1.14.3",
     "@types/cors": "^2.8.18",
     "@types/mongoose": "^5.11.97",
+    "@types/multer": "^1.4.13",
     "bcryptjs": "^3.0.2",
     "better-auth": "^1.2.8",
     "convex": "^1.24.8",
@@ -19,7 +22,8 @@
     "dotenv": "^16.5.0",
     "hono": "^4.7.11",
     "mongodb": "^6.17.0",
-    "mongoose": "^8.15.1"
+    "mongoose": "^8.15.1",
+    "multer": "^2.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
