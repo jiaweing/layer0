@@ -1,0 +1,941 @@
+---
+title: "Database Guide"
+description: "Complete guide to MongoDB and Convex integration"
+---
+
+# Database Guide
+
+Layer0 uses a dual-database approach combining MongoDB for authentication and user data with Convex for real-time features and dynamic content.
+
+## Database Architecture
+
+```mermaid
+graph TB
+    App[Layer0 Application] --> MongoDB[(MongoDB<br/>Auth & User Data)]
+    App --> Convex[(Convex<br/>Real-time Data)]
+
+    subgraph "MongoDB Usage"
+        Users[User Accounts]
+        Sessions[Auth Sessions]
+        Profiles[User Profiles]
+    end
+
+    subgraph "Convex Usage"
+        Posts[Posts]
+        Comments[Comments]
+        Likes[Likes]
+        Realtime[Real-time Updates]
+    end
+
+    MongoDB --> Users
+    MongoDB --> Sessions
+    MongoDB --> Profiles
+
+    Convex --> Posts
+    Convex --> Comments
+    Convex --> Likes
+    Convex --> Realtime
+```
+
+## MongoDB Integration
+
+### Setup and Connection
+
+MongoDB serves as the primary database for user authentication managed by Better Auth.
+
+```typescript title="backend/src/lib/database.ts"
+import { MongoClient, Db } from "mongodb";
+
+const uri = process.env.MONGODB_URI!;
+
+if (!uri) {
+  throw new Error("MONGODB_URI environment variable is required");
+}
+
+let client: MongoClient;
+let database: Db;
+
+async function connectToDatabase(): Promise<Db> {
+  if (database) {
+    return database;
+  }
+
+  try {
+    client = new MongoClient(uri, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+
+    await client.connect();
+    database = client.db();
+
+    console.log("✅ Connected to MongoDB");
+    return database;
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error);
+    throw error;
+  }
+}
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  if (client) {
+    await client.close();
+    console.log("MongoDB connection closed");
+  }
+});
+
+export default connectToDatabase();
+```
+
+### Better Auth Integration
+
+MongoDB is integrated with Better Auth using the MongoDB adapter:
+
+```typescript title="backend/src/lib/auth.ts"
+import { betterAuth } from "better-auth";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import Database from "./database";
+
+export const auth = betterAuth({
+  database: mongodbAdapter(Database),
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false,
+  },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+  },
+  // ... other configuration
+});
+```
+
+### MongoDB Collections
+
+Better Auth automatically creates and manages these collections:
+
+#### Users Collection
+
+```typescript
+interface User {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  image?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+#### Sessions Collection
+
+```typescript
+interface Session {
+  id: string;
+  userId: string;
+  expiresAt: Date;
+  token: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+#### Accounts Collection
+
+```typescript
+interface Account {
+  id: string;
+  userId: string;
+  providerId: string;
+  accountId: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Manual MongoDB Operations
+
+For custom user data beyond authentication:
+
+```typescript title="backend/src/lib/user-service.ts"
+import Database from "./database";
+
+export class UserService {
+  private db = Database;
+
+  async getUserProfile(userId: string) {
+    const db = await this.db;
+    return db.collection("userProfiles").findOne({ userId });
+  }
+
+  async updateUserProfile(userId: string, data: any) {
+    const db = await this.db;
+    return db.collection("userProfiles").updateOne(
+      { userId },
+      {
+        $set: {
+          ...data,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          userId,
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
+  }
+
+  async deleteUserProfile(userId: string) {
+    const db = await this.db;
+    return db.collection("userProfiles").deleteOne({ userId });
+  }
+}
+```
+
+## Convex Integration
+
+### Setup and Configuration
+
+Convex provides real-time database functionality for dynamic content.
+
+```typescript title="backend/convex/schema.ts"
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  posts: defineTable({
+    content: v.string(),
+    authorAuthId: v.string(), // Better Auth user ID from MongoDB
+    imageUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    likesCount: v.number(),
+    commentsCount: v.number(),
+  })
+    .index("by_author", ["authorAuthId"])
+    .index("by_created_at", ["createdAt"]),
+
+  likes: defineTable({
+    postId: v.id("posts"),
+    userAuthId: v.string(), // Better Auth user ID from MongoDB
+    createdAt: v.number(),
+  })
+    .index("by_post", ["postId"])
+    .index("by_user", ["userAuthId"])
+    .index("by_post_user", ["postId", "userAuthId"]),
+
+  comments: defineTable({
+    postId: v.id("posts"),
+    authorAuthId: v.string(), // Better Auth user ID from MongoDB
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_post", ["postId"])
+    .index("by_author", ["authorAuthId"])
+    .index("by_created_at", ["createdAt"]),
+});
+```
+
+### Convex Functions
+
+#### Post Operations
+
+```typescript title="backend/convex/posts.ts"
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+// List all posts
+export const list = query({
+  args: {
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_created_at")
+      .order("desc")
+      .collect();
+
+    // Add user interaction data if userId provided
+    if (args.userId) {
+      const postsWithInteractions = await Promise.all(
+        posts.map(async (post) => {
+          const hasLiked = await ctx.db
+            .query("likes")
+            .withIndex("by_post_user", (q) =>
+              q.eq("postId", post._id).eq("userAuthId", args.userId!)
+            )
+            .unique();
+
+          return {
+            ...post,
+            hasLiked: !!hasLiked,
+          };
+        })
+      );
+      return postsWithInteractions;
+    }
+
+    return posts;
+  },
+});
+
+// Get post by ID
+export const getById = query({
+  args: {
+    id: v.id("posts"),
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.id);
+    if (!post) return null;
+
+    // Check if user has liked this post
+    let hasLiked = false;
+    if (args.userId) {
+      const like = await ctx.db
+        .query("likes")
+        .withIndex("by_post_user", (q) =>
+          q.eq("postId", args.id).eq("userAuthId", args.userId!)
+        )
+        .unique();
+      hasLiked = !!like;
+    }
+
+    return {
+      ...post,
+      hasLiked,
+    };
+  },
+});
+
+// Create new post
+export const create = mutation({
+  args: {
+    content: v.string(),
+    authorAuthId: v.string(),
+    imageUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const postId = await ctx.db.insert("posts", {
+      content: args.content,
+      authorAuthId: args.authorAuthId,
+      imageUrl: args.imageUrl,
+      createdAt: Date.now(),
+      likesCount: 0,
+      commentsCount: 0,
+    });
+
+    return await ctx.db.get(postId);
+  },
+});
+
+// Update post
+export const update = mutation({
+  args: {
+    id: v.id("posts"),
+    content: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.id);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // Check if user owns the post
+    if (post.authorAuthId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
+    await ctx.db.patch(args.id, {
+      content: args.content,
+    });
+
+    return await ctx.db.get(args.id);
+  },
+});
+
+// Delete post
+export const remove = mutation({
+  args: {
+    id: v.id("posts"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.id);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // Check if user owns the post
+    if (post.authorAuthId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
+    // Delete associated likes and comments
+    const likes = await ctx.db
+      .query("likes")
+      .withIndex("by_post", (q) => q.eq("postId", args.id))
+      .collect();
+
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_post", (q) => q.eq("postId", args.id))
+      .collect();
+
+    // Delete in parallel
+    await Promise.all([
+      ...likes.map((like) => ctx.db.delete(like._id)),
+      ...comments.map((comment) => ctx.db.delete(comment._id)),
+      ctx.db.delete(args.id),
+    ]);
+
+    return { success: true };
+  },
+});
+```
+
+#### Like Operations
+
+```typescript title="backend/convex/likes.ts"
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+// Toggle like on a post
+export const toggle = mutation({
+  args: {
+    postId: v.id("posts"),
+    userAuthId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Check if already liked
+    const existingLike = await ctx.db
+      .query("likes")
+      .withIndex("by_post_user", (q) =>
+        q.eq("postId", args.postId).eq("userAuthId", args.userAuthId)
+      )
+      .unique();
+
+    const post = await ctx.db.get(args.postId);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    if (existingLike) {
+      // Unlike: remove like and decrement count
+      await ctx.db.delete(existingLike._id);
+      await ctx.db.patch(args.postId, {
+        likesCount: Math.max(0, post.likesCount - 1),
+      });
+      return { liked: false, likesCount: Math.max(0, post.likesCount - 1) };
+    } else {
+      // Like: add like and increment count
+      await ctx.db.insert("likes", {
+        postId: args.postId,
+        userAuthId: args.userAuthId,
+        createdAt: Date.now(),
+      });
+      await ctx.db.patch(args.postId, {
+        likesCount: post.likesCount + 1,
+      });
+      return { liked: true, likesCount: post.likesCount + 1 };
+    }
+  },
+});
+
+// Get likes for a post
+export const getForPost = query({
+  args: {
+    postId: v.id("posts"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("likes")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .collect();
+  },
+});
+```
+
+#### Comment Operations
+
+```typescript title="backend/convex/comments.ts"
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+// Get comments for a post
+export const getForPost = query({
+  args: {
+    postId: v.id("posts"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("comments")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .order("asc")
+      .collect();
+  },
+});
+
+// Create new comment
+export const create = mutation({
+  args: {
+    postId: v.id("posts"),
+    authorAuthId: v.string(),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.postId);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // Create the comment
+    const commentId = await ctx.db.insert("comments", {
+      postId: args.postId,
+      authorAuthId: args.authorAuthId,
+      content: args.content,
+      createdAt: Date.now(),
+    });
+
+    // Increment comment count on post
+    await ctx.db.patch(args.postId, {
+      commentsCount: post.commentsCount + 1,
+    });
+
+    return await ctx.db.get(commentId);
+  },
+});
+
+// Delete comment
+export const remove = mutation({
+  args: {
+    id: v.id("comments"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.id);
+    if (!comment) {
+      throw new Error("Comment not found");
+    }
+
+    // Check if user owns the comment
+    if (comment.authorAuthId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const post = await ctx.db.get(comment.postId);
+    if (post) {
+      // Decrement comment count
+      await ctx.db.patch(comment.postId, {
+        commentsCount: Math.max(0, post.commentsCount - 1),
+      });
+    }
+
+    await ctx.db.delete(args.id);
+    return { success: true };
+  },
+});
+```
+
+### Backend Convex Client
+
+```typescript title="backend/src/lib/convex.ts"
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../convex/_generated/api";
+
+const deploymentUrl = process.env.CONVEX_DEPLOYMENT!;
+
+if (!deploymentUrl) {
+  throw new Error("CONVEX_DEPLOYMENT environment variable is required");
+}
+
+export const convexClient = new ConvexHttpClient(deploymentUrl);
+
+// Helper function for authenticated queries/mutations
+export async function authenticatedConvexCall(
+  operation: any,
+  args: any,
+  userAuthId: string
+) {
+  return await convexClient.mutation(operation, {
+    ...args,
+    userAuthId,
+  });
+}
+
+export { api };
+```
+
+### Frontend Convex Integration
+
+```typescript title="frontend/src/lib/convex.ts"
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ReactNode } from "react";
+
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+}
+
+export { convex };
+```
+
+## Real-time Features
+
+### Frontend Real-time Queries
+
+```typescript title="frontend/src/hooks/use-posts.ts"
+"use client";
+
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useAuth } from "@/components/providers/auth";
+
+export function usePosts() {
+  const { user } = useAuth();
+
+  const posts = useQuery(api.posts.list, {
+    userId: user?.id,
+  });
+
+  const createPost = useMutation(api.posts.create);
+  const toggleLike = useMutation(api.likes.toggle);
+
+  return {
+    posts,
+    createPost: (content: string, imageUrl?: string) =>
+      createPost({
+        content,
+        authorAuthId: user!.id,
+        imageUrl,
+      }),
+    toggleLike: (postId: string) =>
+      toggleLike({
+        postId: postId as Id<"posts">,
+        userAuthId: user!.id,
+      }),
+  };
+}
+```
+
+### Real-time Components
+
+```typescript title="frontend/src/components/real-time-feed.tsx"
+"use client";
+
+import { usePosts } from "@/hooks/use-posts";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+export function RealTimeFeed() {
+  const { posts, toggleLike } = usePosts();
+
+  if (posts === undefined) {
+    return <div>Loading posts...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {posts.map((post) => (
+        <Card key={post._id}>
+          <CardContent className="pt-6">
+            <p className="mb-4">{post.content}</p>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant={post.hasLiked ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleLike(post._id)}
+              >
+                ❤️ {post.likesCount}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                💬 {post.commentsCount} comments
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+```
+
+## Data Migration
+
+### MongoDB Migrations
+
+```typescript title="backend/src/scripts/migrate.ts"
+import Database from "../lib/database";
+
+async function runMigrations() {
+  const db = await Database;
+
+  // Example: Add indexes
+  await db
+    .collection("userProfiles")
+    .createIndex({ userId: 1 }, { unique: true });
+  await db.collection("userProfiles").createIndex({ email: 1 });
+
+  // Example: Data transformation
+  const users = await db.collection("user").find({}).toArray();
+  for (const user of users) {
+    if (!user.createdAt) {
+      await db
+        .collection("user")
+        .updateOne({ _id: user._id }, { $set: { createdAt: new Date() } });
+    }
+  }
+
+  console.log("Migrations completed");
+}
+
+runMigrations().catch(console.error);
+```
+
+### Convex Schema Updates
+
+When updating Convex schema, the changes are automatically applied on deployment:
+
+```bash
+# Deploy schema changes
+npx convex deploy
+
+# Push schema to dev environment
+npx convex dev
+```
+
+## Backup and Recovery
+
+### MongoDB Backup
+
+```bash
+# Create backup
+mongodump --uri="mongodb://localhost:27017/layer0-auth" --out=./backup
+
+# Restore from backup
+mongorestore --uri="mongodb://localhost:27017/layer0-auth" ./backup/layer0-auth
+```
+
+### Convex Backup
+
+Convex handles backups automatically, but you can export data:
+
+```typescript title="backend/src/scripts/export-convex.ts"
+import { convexClient } from "../lib/convex";
+import { api } from "../convex/_generated/api";
+import fs from "fs";
+
+async function exportData() {
+  const posts = await convexClient.query(api.posts.list, {});
+  const comments = await convexClient.query(api.comments.getAll, {});
+  const likes = await convexClient.query(api.likes.getAll, {});
+
+  const backup = {
+    posts,
+    comments,
+    likes,
+    timestamp: new Date().toISOString(),
+  };
+
+  fs.writeFileSync(
+    `./backups/convex-backup-${Date.now()}.json`,
+    JSON.stringify(backup, null, 2)
+  );
+
+  console.log("Convex data exported");
+}
+
+exportData().catch(console.error);
+```
+
+## Environment Configuration
+
+### Development Environment
+
+```bash title="backend/.env"
+# MongoDB
+MONGODB_URI=mongodb://localhost:27017/layer0-auth
+
+# Convex
+CONVEX_DEPLOYMENT=https://your-dev-deployment.convex.cloud
+
+# Better Auth
+BETTER_AUTH_SECRET=dev-secret-key
+BETTER_AUTH_URL=http://localhost:3001
+```
+
+### Production Environment
+
+```bash title="backend/.env.production"
+# MongoDB Atlas
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/layer0-prod
+
+# Convex Production
+CONVEX_DEPLOYMENT=https://your-prod-deployment.convex.cloud
+
+# Better Auth
+BETTER_AUTH_SECRET=super-secure-production-secret
+BETTER_AUTH_URL=https://api.yourdomain.com
+```
+
+## Performance Optimization
+
+### MongoDB Optimization
+
+```typescript title="backend/src/lib/database-optimized.ts"
+import { MongoClient, Db } from "mongodb";
+
+const client = new MongoClient(uri, {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  maxIdleTimeMS: 30000,
+  minPoolSize: 5,
+});
+
+// Create indexes for better performance
+async function createIndexes(db: Db) {
+  await db.collection("user").createIndex({ email: 1 }, { unique: true });
+  await db.collection("session").createIndex({ userId: 1 });
+  await db
+    .collection("session")
+    .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  await db
+    .collection("userProfiles")
+    .createIndex({ userId: 1 }, { unique: true });
+}
+```
+
+### Convex Optimization
+
+```typescript title="backend/convex/posts-optimized.ts"
+import { query } from "./_generated/server";
+import { v } from "convex/values";
+
+// Paginated query for better performance
+export const listPaginated = query({
+  args: {
+    paginationOpts: v.object({
+      numItems: v.number(),
+      cursor: v.optional(v.string()),
+    }),
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_created_at")
+      .order("desc")
+      .paginate(args.paginationOpts);
+
+    // Batch process user interactions
+    if (args.userId && posts.page.length > 0) {
+      const postIds = posts.page.map((p) => p._id);
+      const likes = await ctx.db
+        .query("likes")
+        .withIndex("by_user", (q) => q.eq("userAuthId", args.userId!))
+        .filter((q) =>
+          q.or(...postIds.map((id) => q.eq(q.field("postId"), id)))
+        )
+        .collect();
+
+      const likedPostIds = new Set(likes.map((l) => l.postId));
+
+      const postsWithInteractions = posts.page.map((post) => ({
+        ...post,
+        hasLiked: likedPostIds.has(post._id),
+      }));
+
+      return {
+        ...posts,
+        page: postsWithInteractions,
+      };
+    }
+
+    return posts;
+  },
+});
+```
+
+## Monitoring and Debugging
+
+### MongoDB Monitoring
+
+```typescript title="backend/src/lib/database-monitor.ts"
+import Database from "./database";
+
+export async function getDatabaseStats() {
+  const db = await Database;
+
+  const stats = await db.stats();
+  const collections = await db.listCollections().toArray();
+
+  const collectionStats = await Promise.all(
+    collections.map(async (col) => ({
+      name: col.name,
+      stats: await db.collection(col.name).stats(),
+    }))
+  );
+
+  return {
+    database: stats,
+    collections: collectionStats,
+  };
+}
+```
+
+### Convex Debugging
+
+```typescript title="backend/convex/debug.ts"
+import { query } from "./_generated/server";
+
+export const getSystemInfo = query({
+  args: {},
+  handler: async (ctx) => {
+    const posts = await ctx.db.query("posts").collect();
+    const likes = await ctx.db.query("likes").collect();
+    const comments = await ctx.db.query("comments").collect();
+
+    return {
+      counts: {
+        posts: posts.length,
+        likes: likes.length,
+        comments: comments.length,
+      },
+      storage: {
+        postsSize: JSON.stringify(posts).length,
+        likesSize: JSON.stringify(likes).length,
+        commentsSize: JSON.stringify(comments).length,
+      },
+    };
+  },
+});
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="API Development" href="/docs/api" icon="📚">
+    Learn how to build robust API endpoints
+  </Card>
+  <Card title="Real-time Features" href="/docs/real-time" icon="⚡">
+    Implement advanced real-time functionality
+  </Card>
+  <Card title="Performance" href="/docs/performance" icon="🚀">
+    Optimize database performance
+  </Card>
+  <Card title="Security" href="/docs/security" icon="🛡️">
+    Secure your database operations
+  </Card>
+</Cards>

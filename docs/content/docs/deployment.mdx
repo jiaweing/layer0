@@ -1,0 +1,438 @@
+---
+title: "Deployment Guide"
+description: "Learn how to deploy your Layer0 application to various platforms including Vercel, Railway, and self-hosted solutions."
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+# Deployment Guide
+
+This guide covers deploying your Layer0 application to production environments with proper environment configuration and best practices.
+
+## Prerequisites
+
+Before deploying, ensure you have:
+
+- All environment variables configured
+- Database connections tested
+- Authentication providers set up
+- Build process verified locally
+
+## Environment Variables
+
+<Callout type="warn">
+  Never commit sensitive environment variables to your repository. Use your
+  platform's secret management system.
+</Callout>
+
+### Required Environment Variables
+
+```bash
+# Database
+DATABASE_URL="mongodb://localhost:27017/layer0"
+CONVEX_DEPLOYMENT=""
+NEXT_PUBLIC_CONVEX_URL=""
+
+# Authentication
+BETTER_AUTH_SECRET=""
+BETTER_AUTH_URL=""
+
+# OAuth Providers (optional)
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+
+# App Configuration
+NEXT_PUBLIC_APP_URL=""
+NODE_ENV="production"
+```
+
+## Deployment Platforms
+
+### Vercel (Recommended)
+
+Vercel provides excellent support for Next.js applications with automatic deployments.
+
+#### Step 1: Prepare Your Project
+
+```bash
+# Install Vercel CLI
+pnpm add -g vercel
+
+# Login to Vercel
+vercel login
+```
+
+#### Step 2: Configure vercel.json
+
+Create a `vercel.json` file in your project root:
+
+```json
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}
+```
+
+#### Step 3: Deploy
+
+```bash
+# Deploy to preview
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
+#### Step 4: Configure Environment Variables
+
+In your Vercel dashboard:
+
+1. Go to Project Settings → Environment Variables
+2. Add all required environment variables
+3. Set them for Production, Preview, and Development environments
+
+### Railway
+
+Railway offers great support for full-stack applications with databases.
+
+#### Step 1: Install Railway CLI
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+```
+
+#### Step 2: Initialize Project
+
+```bash
+# Initialize Railway project
+railway init
+
+# Link to existing project (optional)
+railway link
+```
+
+#### Step 3: Configure Railway
+
+Create a `railway.toml` file:
+
+```toml
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm build"
+
+[deploy]
+startCommand = "pnpm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[[services]]
+name = "web"
+source = "."
+
+[services.web]
+variables = { NODE_ENV = "production" }
+```
+
+#### Step 4: Deploy
+
+```bash
+# Deploy to Railway
+railway up
+```
+
+### Docker Deployment
+
+For self-hosted or container-based deployments.
+
+#### Create Dockerfile
+
+```dockerfile
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable pnpm && pnpm i --frozen-lockfile
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN corepack enable pnpm && pnpm build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "server.js"]
+```
+
+#### Docker Compose
+
+```yaml
+version: "3.8"
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+      - CONVEX_DEPLOYMENT=${CONVEX_DEPLOYMENT}
+      - NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL}
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
+```
+
+## Database Setup
+
+### MongoDB Atlas (Recommended)
+
+1. Create a MongoDB Atlas account
+2. Create a new cluster
+3. Configure network access (IP whitelist)
+4. Create database user
+5. Get connection string and add to environment variables
+
+### Convex Deployment
+
+```bash
+# Deploy Convex functions
+npx convex deploy --prod
+
+# Get deployment URL
+npx convex env get CONVEX_URL
+```
+
+## Post-Deployment Checklist
+
+<Callout>
+  Complete this checklist after each deployment to ensure everything works
+  correctly.
+</Callout>
+
+### Functional Testing
+
+- [ ] Application loads without errors
+- [ ] User registration works
+- [ ] User login works
+- [ ] Protected routes are secured
+- [ ] API endpoints respond correctly
+- [ ] Database connections are stable
+- [ ] Real-time features work (Convex)
+
+### Performance Testing
+
+- [ ] Page load times are acceptable
+- [ ] API response times are under 500ms
+- [ ] Images and assets load quickly
+- [ ] Mobile performance is optimized
+
+### Security Testing
+
+- [ ] HTTPS is enforced
+- [ ] Authentication redirects work
+- [ ] Environment variables are secure
+- [ ] API rate limiting is active
+- [ ] CORS is properly configured
+
+### Monitoring Setup
+
+- [ ] Error tracking is configured
+- [ ] Performance monitoring is active
+- [ ] Uptime monitoring is set up
+- [ ] Log aggregation is working
+
+## Troubleshooting
+
+### Common Deployment Issues
+
+#### Build Failures
+
+```bash
+# Check build logs
+vercel logs [deployment-url]
+
+# Test build locally
+pnpm build
+```
+
+#### Environment Variable Issues
+
+```bash
+# Verify environment variables
+vercel env ls
+
+# Test locally with production env
+vercel env pull .env.local
+pnpm dev
+```
+
+#### Database Connection Issues
+
+- Verify connection strings
+- Check IP whitelisting
+- Confirm user permissions
+- Test connection locally
+
+### Performance Optimization
+
+#### Next.js Optimization
+
+```typescript
+// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    optimizeCss: true,
+    gzipSize: true,
+  },
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  images: {
+    domains: ["example.com"],
+    formats: ["image/webp", "image/avif"],
+  },
+};
+
+export default nextConfig;
+```
+
+#### Database Optimization
+
+- Enable MongoDB connection pooling
+- Use proper indexing
+- Implement query optimization
+- Set up read replicas for high traffic
+
+## Continuous Deployment
+
+### GitHub Actions
+
+Create `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          vercel-args: "--prod"
+```
+
+### Deployment Best Practices
+
+1. **Use staging environments** for testing before production
+2. **Implement health checks** for zero-downtime deployments
+3. **Monitor deployments** with alerts and rollback procedures
+4. **Use feature flags** for gradual rollouts
+5. **Backup databases** before major deployments
+
+## Next Steps
+
+After successful deployment:
+
+1. Set up monitoring and alerting
+2. Configure backup procedures
+3. Implement logging and analytics
+4. Plan for scaling and optimization
+5. Document your deployment process
+
+For more information, see our [Testing Guide](/docs/testing) and [Security Best Practices](/docs/security).

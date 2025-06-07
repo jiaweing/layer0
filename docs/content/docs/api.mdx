@@ -1,0 +1,841 @@
+---
+title: "API Reference"
+description: "Complete API endpoint documentation for Layer0"
+---
+
+# API Reference
+
+Complete documentation for all Layer0 backend API endpoints, including authentication, posts, likes, comments, and file uploads.
+
+## Base URL
+
+```
+http://localhost:3001  # Development
+https://api.yourdomain.com  # Production
+```
+
+## Authentication
+
+All protected endpoints require authentication via session cookies. The session cookie is automatically set upon successful login.
+
+### Headers
+
+```
+Content-Type: application/json
+Cookie: better-auth.session_token=<session_token>
+```
+
+## Authentication Endpoints
+
+### Sign Up
+
+Create a new user account.
+
+```http
+POST /api/auth/sign-up
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "name": "John Doe"
+}
+```
+
+**Response:**
+
+```json
+{
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "emailVerified": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "session": {
+    "id": "session_123",
+    "userId": "user_123",
+    "expiresAt": "2024-01-08T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `201` - User created successfully
+- `400` - Invalid request data
+- `409` - Email already exists
+
+### Sign In
+
+Authenticate with existing credentials.
+
+```http
+POST /api/auth/sign-in
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "emailVerified": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "session": {
+    "id": "session_123",
+    "userId": "user_123",
+    "expiresAt": "2024-01-08T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200` - Authentication successful
+- `400` - Invalid request data
+- `401` - Invalid credentials
+
+### Sign Out
+
+End the current session.
+
+```http
+POST /api/auth/sign-out
+```
+
+**Response:**
+
+```json
+{
+  "success": true
+}
+```
+
+**Status Codes:**
+
+- `200` - Sign out successful
+
+### Get Session
+
+Get current session information.
+
+```http
+GET /api/auth/session
+```
+
+**Response:**
+
+```json
+{
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "emailVerified": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "session": {
+    "id": "session_123",
+    "userId": "user_123",
+    "expiresAt": "2024-01-08T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200` - Session found
+- `401` - No active session
+
+## User Endpoints
+
+### Get Current User
+
+Get the current authenticated user's profile.
+
+```http
+GET /api/users/me
+```
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Response:**
+
+```json
+{
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "emailVerified": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200` - User profile retrieved
+- `401` - Not authenticated
+
+### Update User Profile
+
+Update the current user's profile information.
+
+```http
+PATCH /api/users/me
+```
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Request Body:**
+
+```json
+{
+  "name": "John Smith",
+  "image": "https://example.com/avatar.jpg"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Profile updated",
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Smith",
+    "image": "https://example.com/avatar.jpg",
+    "emailVerified": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200` - Profile updated successfully
+- `400` - Invalid request data
+- `401` - Not authenticated
+
+### Get User by ID
+
+Get public information about a user by their ID.
+
+```http
+GET /api/users/{id}
+```
+
+**Parameters:**
+
+- `id` (string): User ID
+
+**Response:**
+
+```json
+{
+  "user": {
+    "id": "user_123",
+    "name": "John Doe",
+    "image": "https://example.com/avatar.jpg",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200` - User found
+- `404` - User not found
+
+## Post Endpoints
+
+### Get All Posts
+
+Retrieve all posts with optional user interaction data.
+
+```http
+GET /api/posts
+```
+
+**Headers:** `Cookie: better-auth.session_token=<token>` (optional)
+
+**Response:**
+
+```json
+{
+  "posts": [
+    {
+      "_id": "post_123",
+      "content": "Hello, world!",
+      "authorAuthId": "user_123",
+      "imageUrl": "https://example.com/image.jpg",
+      "createdAt": 1640995200000,
+      "likesCount": 5,
+      "commentsCount": 2,
+      "hasLiked": true // Only if authenticated
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- `200` - Posts retrieved successfully
+- `500` - Server error
+
+### Get Post by ID
+
+Retrieve a specific post by its ID.
+
+```http
+GET /api/posts/{id}
+```
+
+**Parameters:**
+
+- `id` (string): Post ID
+
+**Headers:** `Cookie: better-auth.session_token=<token>` (optional)
+
+**Response:**
+
+```json
+{
+  "post": {
+    "_id": "post_123",
+    "content": "Hello, world!",
+    "authorAuthId": "user_123",
+    "imageUrl": "https://example.com/image.jpg",
+    "createdAt": 1640995200000,
+    "likesCount": 5,
+    "commentsCount": 2,
+    "hasLiked": true // Only if authenticated
+  }
+}
+```
+
+**Status Codes:**
+
+- `200` - Post found
+- `404` - Post not found
+- `500` - Server error
+
+### Create Post
+
+Create a new post.
+
+```http
+POST /api/posts
+```
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Request Body:**
+
+```json
+{
+  "content": "This is my new post!",
+  "imageUrl": "https://example.com/image.jpg" // Optional
+}
+```
+
+**Response:**
+
+```json
+{
+  "post": {
+    "_id": "post_456",
+    "content": "This is my new post!",
+    "authorAuthId": "user_123",
+    "imageUrl": "https://example.com/image.jpg",
+    "createdAt": 1640995200000,
+    "likesCount": 0,
+    "commentsCount": 0
+  }
+}
+```
+
+**Status Codes:**
+
+- `201` - Post created successfully
+- `400` - Invalid request data (empty content)
+- `401` - Not authenticated
+- `500` - Server error
+
+### Update Post
+
+Update an existing post (only by the author).
+
+```http
+PATCH /api/posts/{id}
+```
+
+**Parameters:**
+
+- `id` (string): Post ID
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Request Body:**
+
+```json
+{
+  "content": "Updated post content"
+}
+```
+
+**Response:**
+
+```json
+{
+  "post": {
+    "_id": "post_123",
+    "content": "Updated post content",
+    "authorAuthId": "user_123",
+    "imageUrl": "https://example.com/image.jpg",
+    "createdAt": 1640995200000,
+    "likesCount": 5,
+    "commentsCount": 2
+  }
+}
+```
+
+**Status Codes:**
+
+- `200` - Post updated successfully
+- `401` - Not authenticated
+- `403` - Not authorized (not the author)
+- `404` - Post not found
+- `500` - Server error
+
+### Delete Post
+
+Delete an existing post (only by the author).
+
+```http
+DELETE /api/posts/{id}
+```
+
+**Parameters:**
+
+- `id` (string): Post ID
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Response:**
+
+```json
+{
+  "message": "Post deleted"
+}
+```
+
+**Status Codes:**
+
+- `200` - Post deleted successfully
+- `401` - Not authenticated
+- `403` - Not authorized (not the author)
+- `404` - Post not found
+- `500` - Server error
+
+## Like Endpoints
+
+### Toggle Like
+
+Like or unlike a post.
+
+```http
+POST /api/likes/toggle
+```
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Request Body:**
+
+```json
+{
+  "postId": "post_123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "liked": true,
+  "likesCount": 6
+}
+```
+
+**Status Codes:**
+
+- `200` - Like toggled successfully
+- `400` - Invalid request data
+- `401` - Not authenticated
+- `404` - Post not found
+- `500` - Server error
+
+### Get Post Likes
+
+Get all likes for a specific post.
+
+```http
+GET /api/likes/post/{postId}
+```
+
+**Parameters:**
+
+- `postId` (string): Post ID
+
+**Response:**
+
+```json
+{
+  "likes": [
+    {
+      "_id": "like_123",
+      "postId": "post_123",
+      "userAuthId": "user_123",
+      "createdAt": 1640995200000
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- `200` - Likes retrieved successfully
+- `404` - Post not found
+- `500` - Server error
+
+## Comment Endpoints
+
+### Get Post Comments
+
+Get all comments for a specific post.
+
+```http
+GET /api/comments/post/{postId}
+```
+
+**Parameters:**
+
+- `postId` (string): Post ID
+
+**Response:**
+
+```json
+{
+  "comments": [
+    {
+      "_id": "comment_123",
+      "postId": "post_123",
+      "authorAuthId": "user_456",
+      "content": "Great post!",
+      "createdAt": 1640995200000
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- `200` - Comments retrieved successfully
+- `404` - Post not found
+- `500` - Server error
+
+### Create Comment
+
+Add a comment to a post.
+
+```http
+POST /api/comments
+```
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Request Body:**
+
+```json
+{
+  "postId": "post_123",
+  "content": "This is a great post!"
+}
+```
+
+**Response:**
+
+```json
+{
+  "comment": {
+    "_id": "comment_456",
+    "postId": "post_123",
+    "authorAuthId": "user_123",
+    "content": "This is a great post!",
+    "createdAt": 1640995200000
+  }
+}
+```
+
+**Status Codes:**
+
+- `201` - Comment created successfully
+- `400` - Invalid request data
+- `401` - Not authenticated
+- `404` - Post not found
+- `500` - Server error
+
+### Delete Comment
+
+Delete a comment (only by the author).
+
+```http
+DELETE /api/comments/{id}
+```
+
+**Parameters:**
+
+- `id` (string): Comment ID
+
+**Headers:** `Cookie: better-auth.session_token=<token>`
+
+**Response:**
+
+```json
+{
+  "message": "Comment deleted"
+}
+```
+
+**Status Codes:**
+
+- `200` - Comment deleted successfully
+- `401` - Not authenticated
+- `403` - Not authorized (not the author)
+- `404` - Comment not found
+- `500` - Server error
+
+## File Upload Endpoints
+
+### Upload Image
+
+Upload an image file to S3.
+
+```http
+POST /api/uploads/image
+```
+
+**Headers:**
+
+- `Cookie: better-auth.session_token=<token>`
+- `Content-Type: multipart/form-data`
+
+**Request Body:**
+
+- `file` (File): Image file (JPEG, PNG, GIF, WebP)
+
+**Response:**
+
+```json
+{
+  "url": "https://your-bucket.s3.amazonaws.com/uploads/user_123/image_456.jpg"
+}
+```
+
+**Status Codes:**
+
+- `200` - File uploaded successfully
+- `400` - No file provided or invalid file type
+- `413` - File too large (>5MB)
+- `401` - Not authenticated
+- `500` - Upload failed
+
+**File Restrictions:**
+
+- **Allowed types:** `image/jpeg`, `image/png`, `image/gif`, `image/webp`
+- **Max size:** 5MB
+- **Naming:** Files are renamed with UUID to prevent conflicts
+
+## Health Check
+
+### Server Status
+
+Check if the server is running and healthy.
+
+```http
+GET /
+```
+
+**Response:**
+
+```json
+{
+  "message": "Layer0 Backend API",
+  "status": "healthy"
+}
+```
+
+**Status Codes:**
+
+- `200` - Server is healthy
+
+## Error Responses
+
+All endpoints may return error responses in the following format:
+
+```json
+{
+  "error": "Error message description",
+  "details": {} // Additional error details (development only)
+}
+```
+
+### Common Error Status Codes
+
+- `400` - Bad Request (invalid request data)
+- `401` - Unauthorized (authentication required)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found (resource doesn't exist)
+- `409` - Conflict (resource already exists)
+- `413` - Payload Too Large (file size exceeded)
+- `429` - Too Many Requests (rate limit exceeded)
+- `500` - Internal Server Error
+
+## Rate Limiting
+
+API endpoints are rate-limited to prevent abuse:
+
+- **Authentication endpoints:** 5 requests per minute per IP
+- **Post creation:** 10 posts per minute per user
+- **File uploads:** 5 uploads per minute per user
+- **General API:** 100 requests per minute per user
+
+When rate limit is exceeded, the server returns:
+
+```json
+{
+  "error": "Too many requests"
+}
+```
+
+**Status Code:** `429`
+
+## SDK Examples
+
+### JavaScript/TypeScript
+
+```typescript
+// Authentication
+const signUp = async (email: string, password: string, name: string) => {
+  const response = await fetch("/api/auth/sign-up", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email, password, name }),
+  });
+  return response.json();
+};
+
+// Create post
+const createPost = async (content: string, imageUrl?: string) => {
+  const response = await fetch("/api/posts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ content, imageUrl }),
+  });
+  return response.json();
+};
+
+// Upload image
+const uploadImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch("/api/uploads/image", {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  return response.json();
+};
+```
+
+### cURL Examples
+
+```bash
+# Sign up
+curl -X POST http://localhost:3001/api/auth/sign-up \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123","name":"Test User"}' \
+  -c cookies.txt
+
+# Create post (using saved cookies)
+curl -X POST http://localhost:3001/api/posts \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{"content":"Hello from cURL!"}'
+
+# Upload image
+curl -X POST http://localhost:3001/api/uploads/image \
+  -b cookies.txt \
+  -F "file=@/path/to/image.jpg"
+```
+
+## WebSocket Events (Convex Real-time)
+
+Layer0 uses Convex for real-time updates. The frontend automatically receives live updates for:
+
+### Post Events
+
+- `posts:created` - New post created
+- `posts:updated` - Post content updated
+- `posts:deleted` - Post removed
+
+### Like Events
+
+- `likes:added` - Post liked
+- `likes:removed` - Post unliked
+
+### Comment Events
+
+- `comments:created` - New comment added
+- `comments:deleted` - Comment removed
+
+These events are handled automatically by the Convex React client and update the UI in real-time.
+
+## Next Steps
+
+<Cards>
+  <Card title="Authentication Guide" href="/docs/authentication" icon="🔒">
+    Learn about Better Auth implementation
+  </Card>
+  <Card title="Backend Development" href="/docs/backend" icon="⚡">
+    Understand the Hono server architecture
+  </Card>
+  <Card title="Frontend Integration" href="/docs/frontend" icon="🌐">
+    Connect your frontend to these APIs
+  </Card>
+  <Card title="Testing APIs" href="/docs/testing" icon="🧪">
+    Learn how to test your API endpoints
+  </Card>
+</Cards>
