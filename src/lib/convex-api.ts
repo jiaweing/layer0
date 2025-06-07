@@ -118,8 +118,7 @@ export const useConvexAPI = () => {
 
 // Custom hooks for queries
 export const useConvexQueries = () => {
-  return {
-    usePosts: (limit?: number, cursor?: number) => {
+  return {    usePosts: (limit?: number, cursor?: string) => {
       return useQuery(api.posts.getPosts, { limit, cursor });
     },
 

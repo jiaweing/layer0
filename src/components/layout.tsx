@@ -5,7 +5,7 @@ import ThemeToggler from "@/components/theme/toggler";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site.config";
 import { signOut } from "@/lib/auth";
-import { Heart, Home, LogOut, PlusSquare, Search, User } from "lucide-react";
+import { Heart, Home, LogOut, PlusSquare, Search, User, Users } from "lucide-react";
 import { NavLink } from "react-router";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -29,10 +29,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {siteConfig.name}
             </NavLink>
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-2">
+            {/* Right side actions */}            <div className="flex items-center gap-2">
               {isAuthenticated ? (
                 <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" asChild>
+                    <NavLink to="/groups">
+                      <Users className="w-4 h-4" />
+                      <span className="hidden sm:inline ml-1">Groups</span>
+                    </NavLink>
+                  </Button>
                   <span className="text-sm text-muted-foreground hidden sm:block">
                     {user?.name || user?.email}
                   </span>
@@ -60,8 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="pb-20 md:pb-8">{children}</main>
 
       {/* Bottom Navigation (Mobile) */}
-      {isAuthenticated && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border md:hidden">
+      {isAuthenticated && (        <nav className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border md:hidden">
           <div className="flex justify-around items-center h-16 px-4">
             <NavLink
               to="/"
@@ -81,11 +85,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <button className="p-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
               <PlusSquare className="w-6 h-6" />
             </button>
+            <NavLink
+              to="/groups"
+              className={({ isActive }) =>
+                `p-3 rounded-lg transition-colors ${
+                  isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground"
+                }`
+              }
+            >
+              <Users className="w-6 h-6" />
+            </NavLink>
             <button className="p-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
               <Heart className="w-6 h-6" />
             </button>
             <NavLink
-              to="/dashboard"
+              to="/settings"
               className={({ isActive }) =>
                 `p-3 rounded-lg transition-colors ${
                   isActive

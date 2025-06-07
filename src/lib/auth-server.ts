@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
+import { organization } from "better-auth/plugins";
 import { MongoClient } from "mongodb";
 
 // MongoDB connection
@@ -31,6 +32,34 @@ export const auth = betterAuth({
     "http://localhost:3001", // Alternative frontend port
   ],
   plugins: [
+    organization({
+      teams: {
+        enabled: true,
+        maximumTeams: 50, // Maximum channels per group
+        allowRemovingAllTeams: false, // Prevent removing the last channel
+      },
+      allowUserToCreateOrganization: true,
+      organizationCreation: {
+        beforeCreate: async ({ organization, user }) => {
+          // Add default metadata for groups
+          return {
+            data: {
+              ...organization,
+              metadata: {
+                ...organization.metadata,
+                type: "group", // Mark as a Layer0 group
+                visibility: "public", // Default visibility
+                memberCount: 1, // Initial member count
+              },
+            },
+          };
+        },
+        afterCreate: async ({ organization, member }) => {
+          // Create default general channel after group creation
+          // This will be handled by the client after organization creation
+        },
+      },
+    }),
     nextCookies(), // This should be the last plugin in the array
   ],
 });

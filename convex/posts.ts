@@ -1,18 +1,94 @@
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
 
-// Create a new post
+export const getPosts = query({
+  args: {
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+    teamId: v.optional(v.string()), // Better Auth team ID (channel)
+    organizationId: v.optional(v.string()), // Better Auth organization ID (group)
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+    
+    let query = ctx.db.query("posts");
+    
+    // Filter by team (channel) if provided
+    if (args.teamId) {
+      query = query.filter((q) => q.eq(q.field("teamId"), args.teamId));
+    }
+    // Filter by organization (group) if provided and no team specified
+    else if (args.organizationId) {
+      query = query.filter((q) => q.eq(q.field("organizationId"), args.organizationId));
+    }
+    // For global feed, only show posts without team/organization
+    else {
+      query = query.filter((q) => 
+        q.and(
+          q.eq(q.field("teamId"), undefined),
+          q.eq(q.field("organizationId"), undefined)
+        )
+      );
+    }
+      const posts = await query
+      .order("desc")
+      .paginate({
+        cursor: args.cursor || null,
+        numItems: limit,
+      });
+
+    // Get user data for each post
+    const postsWithUsers = await Promise.all(
+      posts.page.map(async (post) => {
+        const user = await ctx.db
+          .query("users")
+          .withIndex("by_auth_id", (q) => q.eq("authId", post.authorAuthId))
+          .first();
+
+        return {
+          ...post,
+          author: user,
+        };
+      })
+    );
+
+    return {
+      posts: postsWithUsers,
+      continueCursor: posts.continueCursor,
+      isDone: posts.isDone,
+    };
+  },
+});
+
 export const createPost = mutation({
   args: {
     content: v.string(),
-    authorAuthId: v.string(),
     imageUrl: v.optional(v.string()),
+    teamId: v.optional(v.string()), // Better Auth team ID (channel)
+    organizationId: v.optional(v.string()), // Better Auth organization ID (group)
   },
   handler: async (ctx, args) => {
+    // Get the current user's auth ID from the context
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_auth_id", (q) => q.eq("authId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
     const postId = await ctx.db.insert("posts", {
       content: args.content,
-      authorAuthId: args.authorAuthId,
       imageUrl: args.imageUrl,
+      authorAuthId: user.authId,
+      teamId: args.teamId,
+      organizationId: args.organizationId,
       createdAt: Date.now(),
       likesCount: 0,
       commentsCount: 0,
@@ -22,57 +98,16 @@ export const createPost = mutation({
   },
 });
 
-// Get posts for feed (paginated) with author information
-export const getPosts = query({
-  args: {
-    limit: v.optional(v.number()),
-    cursor: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 20;
-    const cursor = args.cursor ?? Date.now();
-
-    const posts = await ctx.db
-      .query("posts")
-      .withIndex("by_created_at", (q) => q.lt("createdAt", cursor))
-      .order("desc")
-      .take(limit);
-
-    // Get author information for each post
-    const postsWithAuthors = await Promise.all(
-      posts.map(async (post) => {
-        const author = await ctx.db
-          .query("users")
-          .withIndex("by_auth_id", (q) => q.eq("authId", post.authorAuthId))
-          .unique();
-
-        return {
-          ...post,
-          author,
-        };
-      })
-    );
-
-    return {
-      posts: postsWithAuthors,
-      nextCursor:
-        posts.length === limit ? posts[posts.length - 1]?.createdAt : null,
-    };
-  },
-});
-
-// Get a single post with details and author information
 export const getPost = query({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
     const post = await ctx.db.get(args.postId);
     if (!post) return null;
 
-    // Get author information
     const author = await ctx.db
       .query("users")
       .withIndex("by_auth_id", (q) => q.eq("authId", post.authorAuthId))
-      .unique();
+      .first();
 
     return {
       ...post,
@@ -81,7 +116,6 @@ export const getPost = query({
   },
 });
 
-// Get user's posts with author information
 export const getUserPosts = query({
   args: {
     authId: v.string(),
@@ -96,11 +130,10 @@ export const getUserPosts = query({
       .order("desc")
       .take(limit);
 
-    // Get author information for the posts
     const author = await ctx.db
       .query("users")
       .withIndex("by_auth_id", (q) => q.eq("authId", args.authId))
-      .unique();
+      .first();
 
     const postsWithAuthor = posts.map((post) => ({
       ...post,
@@ -111,7 +144,6 @@ export const getUserPosts = query({
   },
 });
 
-// Delete a post
 export const deletePost = mutation({
   args: {
     postId: v.id("posts"),

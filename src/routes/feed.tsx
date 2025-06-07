@@ -364,7 +364,7 @@ export default function Feed() {
   const { usePosts } = useConvexQueries();
   // For now, use basic pagination instead of infinite scroll
   const [limit] = useState(20);
-  const [cursor, setCursor] = useState<number | undefined>(undefined);
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
 
   const postsData = usePosts(limit, cursor);
   const [allPosts, setAllPosts] = useState<ConvexPost[]>([]);
@@ -417,10 +417,9 @@ export default function Feed() {
       console.error("Failed to create comment:", error);
     }
   };
-
   const handleLoadMore = () => {
-    if (postsData?.nextCursor) {
-      setCursor(postsData.nextCursor);
+    if (postsData?.continueCursor) {
+      setCursor(postsData.continueCursor);
     }
   };
 
@@ -482,7 +481,7 @@ export default function Feed() {
         )}
 
         {/* Load More Button */}
-        {postsData?.nextCursor && (
+        {postsData?.continueCursor && (
           <div className="text-center py-6 border-t border-border/50">
             <Button
               onClick={handleLoadMore}
