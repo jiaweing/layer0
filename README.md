@@ -1,35 +1,49 @@
-# Layer 0 - Better Auth Implementation
+# Layer 0 - Modern Full-Stack Social Platform
 
-A modern full-stack starter kit with Better Auth integration, featuring a Hono backend and Next.js frontend with React Router.
+A modern full-stack social media platform with Better Auth integration, Convex real-time database, AWS S3 file storage, featuring a Hono backend and Next.js frontend with React Router.
 
 > Built on top of [NexFaster](https://github.com/rudrodip/nexfaster) - A minimal template showcasing React Router integration within Next.js for client-side routing. Special thanks to [@rds_agi](https://github.com/rudrodip) for the innovative Next.js + React Router navigation foundation.
 
 ## Features
 
 - ✅ **Better Auth** with email/password authentication
-- ✅ **MongoDB** database integration
+- ✅ **MongoDB** database integration for user management
+- ✅ **Convex** real-time database for posts, comments, and likes
+- ✅ **AWS S3** file storage for images and avatars
 - ✅ **Hono** backend with TypeScript
 - ✅ **Next.js** frontend with React Router (CSR only)
 - ✅ **Tailwind CSS** for styling
 - ✅ **Dark/Light theme** support
 - ✅ **Protected routes** and authentication context
 - ✅ **Session management** with secure cookies
+- ✅ **Real-time social features** (posts, likes, comments)
+- ✅ **Image upload** with S3 integration
+- ✅ **Avatar management** with cropping functionality
 
 ## Architecture
 
 ### Backend (Port 3001)
 
 - **Hono** Node.js server
-- **Better Auth** with MongoDB adapter
+- **Better Auth** with MongoDB adapter for user authentication
+- **User management** and profile API routes
+- **AWS S3** integration for legacy file operations
 - **CORS** enabled for frontend communication
-- **Environment-based configuration**
 
 ### Frontend (Port 3000)
 
 - **Next.js** with React Router (client-side only)
-- **Better Auth React** integration
+- **Better Auth React** integration for authentication
+- **Convex React** for real-time data operations
+- **AWS S3** direct upload from client
 - **Tailwind CSS** with shadcn/ui components
 - **Context-based auth state management**
+
+### Database & Storage
+
+- **MongoDB**: User profiles and authentication data
+- **Convex**: Posts, comments, likes, and social interactions
+- **AWS S3**: Image storage (avatars, post images)
 
 ## Quick Start
 
