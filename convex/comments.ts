@@ -32,7 +32,7 @@ export const createComment = mutation({
   },
 });
 
-// Get comments for a post
+// Get comments for a post with author information
 export const getPostComments = query({
   args: {
     postId: v.id("posts"),
@@ -47,11 +47,22 @@ export const getPostComments = query({
       .order("desc")
       .take(limit);
 
-    // Return comments with authorAuthId (MongoDB users will be fetched on frontend)
-    return comments.map((comment) => ({
-      ...comment,
-      authorAuthId: comment.authorAuthId,
-    }));
+    // Get author information for each comment
+    const commentsWithAuthors = await Promise.all(
+      comments.map(async (comment) => {
+        const author = await ctx.db
+          .query("users")
+          .withIndex("by_auth_id", (q) => q.eq("authId", comment.authorAuthId))
+          .unique();
+
+        return {
+          ...comment,
+          author,
+        };
+      })
+    );
+
+    return commentsWithAuthors;
   },
 });
 
@@ -84,7 +95,7 @@ export const deleteComment = mutation({
   },
 });
 
-// Get user's comments
+// Get user's comments with author and post information
 export const getUserComments = query({
   args: {
     authId: v.string(),
@@ -99,24 +110,31 @@ export const getUserComments = query({
       .order("desc")
       .take(limit);
 
-    // Get post information for each comment
-    const commentsWithPosts = await Promise.all(
+    // Get author and post information for each comment
+    const commentsWithDetails = await Promise.all(
       comments.map(async (comment) => {
+        const author = await ctx.db
+          .query("users")
+          .withIndex("by_auth_id", (q) => q.eq("authId", comment.authorAuthId))
+          .unique();
+
         const post = await ctx.db.get(comment.postId);
+
         return {
           ...comment,
+          author,
           post: post
             ? {
                 _id: post._id,
                 content:
                   post.content.substring(0, 100) +
                   (post.content.length > 100 ? "..." : ""),
+                authorAuthId: post.authorAuthId,
               }
             : null,
         };
       })
     );
-
-    return commentsWithPosts;
+    return commentsWithDetails;
   },
 });

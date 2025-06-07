@@ -7,10 +7,13 @@ import { Id } from "../../convex/_generated/dataModel";
 // Export types that components will use
 export interface User {
   _id: string;
+  authId: string;
   name?: string;
   email: string;
   image?: string;
   bio?: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface ConvexPost {
@@ -21,6 +24,7 @@ export interface ConvexPost {
   createdAt: number;
   likesCount: number;
   commentsCount: number;
+  author?: User | null;
 }
 
 export interface Post extends Omit<ConvexPost, "authorAuthId"> {
@@ -33,7 +37,7 @@ export interface Comment {
   createdAt: number;
   postId: Id<"posts">;
   authorAuthId: string;
-  author?: User; // Populated in components
+  author?: User | null;
 }
 
 export interface PostsResponse {
@@ -53,6 +57,10 @@ export const useConvexAPI = () => {
   // Comments
   const createCommentMutation = useMutation(api.comments.createComment);
   const deleteCommentMutation = useMutation(api.comments.deleteComment);
+
+  // Users
+  const upsertUserMutation = useMutation(api.users.upsertUser);
+  const updateUserProfileMutation = useMutation(api.users.updateUserProfile);
 
   return {
     // Posts
@@ -84,6 +92,26 @@ export const useConvexAPI = () => {
 
     deleteComment: async (commentId: Id<"comments">, authorAuthId: string) => {
       return await deleteCommentMutation({ commentId, authorAuthId });
+    },
+
+    // Users
+    upsertUser: async (userData: {
+      authId: string;
+      name?: string;
+      email: string;
+      image?: string;
+      bio?: string;
+    }) => {
+      return await upsertUserMutation(userData);
+    },
+
+    updateUserProfile: async (userData: {
+      authId: string;
+      name?: string;
+      image?: string;
+      bio?: string;
+    }) => {
+      return await updateUserProfileMutation(userData);
     },
   };
 };
@@ -137,6 +165,18 @@ export const useConvexQueries = () => {
       return useQuery(
         api.comments.getUserComments,
         authId ? { authId } : "skip"
+      );
+    },
+
+    // Users
+    useUserByAuthId: (authId: string | undefined) => {
+      return useQuery(api.users.getUserByAuthId, authId ? { authId } : "skip");
+    },
+
+    useUsersByAuthIds: (authIds: string[] | undefined) => {
+      return useQuery(
+        api.users.getUsersByAuthIds,
+        authIds && authIds.length > 0 ? { authIds } : "skip"
       );
     },
   };

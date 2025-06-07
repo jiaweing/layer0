@@ -1,5 +1,5 @@
 import { useAuth } from "@/components/providers/auth";
-import { legacyApiService } from "@/lib/convex-api";
+import { legacyApiService, useConvexAPI } from "@/lib/convex-api";
 import { S3Service } from "@/lib/s3";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -8,6 +8,7 @@ export function useAvatarUpload() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
+  const { updateUserProfile } = useConvexAPI();
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -17,9 +18,16 @@ export function useAvatarUpload() {
       // First upload to S3
       const avatarUrl = await S3Service.uploadFile(file, "avatars");
 
-      // Then update user profile with the new avatar URL
+      // Then update user profile with the new avatar URL (MongoDB/Better Auth)
       const updatedUser = await legacyApiService.updateProfile({
         image: avatarUrl,
+      });
+
+      // Also update the user in Convex database
+      await updateUserProfile({
+        authId: user.id,
+        image: avatarUrl,
+        name: user.name,
       });
 
       return updatedUser;
@@ -48,9 +56,16 @@ export function useAvatarUpload() {
         }
       }
 
-      // Update user profile to remove avatar
+      // Update user profile to remove avatar (MongoDB/Better Auth)
       const updatedUser = await legacyApiService.updateProfile({
         image: undefined,
+      });
+
+      // Also update the user in Convex database
+      await updateUserProfile({
+        authId: user.id,
+        image: undefined,
+        name: user.name,
       });
 
       return updatedUser;

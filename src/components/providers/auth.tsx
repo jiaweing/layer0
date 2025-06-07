@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: sessionData, isPending } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [hasSynced, setHasSynced] = useState(false);
 
   useEffect(() => {
     if (sessionData) {
@@ -51,8 +52,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setUser(null);
       setSession(null);
+      setHasSynced(false);
     }
   }, [sessionData]);
+
+  // Sync user data to Convex when user signs in
+  useEffect(() => {
+    if (user && !hasSynced) {
+      const syncUser = async () => {
+        try {
+          const response = await fetch("/api/users/sync", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            setHasSynced(true);
+            console.log("User synced to Convex successfully");
+          } else {
+            console.error("Failed to sync user to Convex");
+          }
+        } catch (error) {
+          console.error("Error syncing user to Convex:", error);
+        }
+      };
+
+      syncUser();
+    }
+  }, [user, hasSynced]);
 
   const isAuthenticated = !!user;
 

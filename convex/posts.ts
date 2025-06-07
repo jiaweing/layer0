@@ -22,7 +22,7 @@ export const createPost = mutation({
   },
 });
 
-// Get posts for feed (paginated)
+// Get posts for feed (paginated) with author information
 export const getPosts = query({
   args: {
     limit: v.optional(v.number()),
@@ -38,26 +38,50 @@ export const getPosts = query({
       .order("desc")
       .take(limit);
 
+    // Get author information for each post
+    const postsWithAuthors = await Promise.all(
+      posts.map(async (post) => {
+        const author = await ctx.db
+          .query("users")
+          .withIndex("by_auth_id", (q) => q.eq("authId", post.authorAuthId))
+          .unique();
+
+        return {
+          ...post,
+          author,
+        };
+      })
+    );
+
     return {
-      posts: posts,
+      posts: postsWithAuthors,
       nextCursor:
         posts.length === limit ? posts[posts.length - 1]?.createdAt : null,
     };
   },
 });
 
-// Get a single post with details
+// Get a single post with details and author information
 export const getPost = query({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
     const post = await ctx.db.get(args.postId);
     if (!post) return null;
 
-    return post;
+    // Get author information
+    const author = await ctx.db
+      .query("users")
+      .withIndex("by_auth_id", (q) => q.eq("authId", post.authorAuthId))
+      .unique();
+
+    return {
+      ...post,
+      author,
+    };
   },
 });
 
-// Get user's posts
+// Get user's posts with author information
 export const getUserPosts = query({
   args: {
     authId: v.string(),
@@ -72,7 +96,18 @@ export const getUserPosts = query({
       .order("desc")
       .take(limit);
 
-    return posts;
+    // Get author information for the posts
+    const author = await ctx.db
+      .query("users")
+      .withIndex("by_auth_id", (q) => q.eq("authId", args.authId))
+      .unique();
+
+    const postsWithAuthor = posts.map((post) => ({
+      ...post,
+      author,
+    }));
+
+    return postsWithAuthor;
   },
 });
 

@@ -25,7 +25,7 @@ interface PostCardProps {
   post: ConvexPost;
   onLike: (postId: Id<"posts">) => void;
   onComment: (postId: Id<"posts">, content: string) => void;
-  postAuthor?: User;
+  postAuthor?: User | null;
 }
 
 function PostCard({ post, onLike, onComment, postAuthor }: PostCardProps) {
@@ -60,10 +60,21 @@ function PostCard({ post, onLike, onComment, postAuthor }: PostCardProps) {
 
   return (
     <div className="border-b border-border/50 py-4 px-6 hover:bg-muted/30 transition-colors">
+      {" "}
       {/* Post Header */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-primary/80 to-primary rounded-full flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
-          {postAuthor?.name?.[0] || postAuthor?.email?.[0] || "?"}
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm flex-shrink-0 overflow-hidden">
+          {postAuthor?.image ? (
+            <img
+              src={postAuthor.image}
+              alt={postAuthor.name || postAuthor.email}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
+              {postAuthor?.name?.[0] || postAuthor?.email?.[0] || "?"}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -144,15 +155,25 @@ function PostCard({ post, onLike, onComment, postAuthor }: PostCardProps) {
           <MoreHorizontal className="w-4 h-4" />
         </Button>
       </div>
-
       {/* Comments Section */}
       {showComments && (
         <div className="mt-4 pl-13 space-y-3">
+          {" "}
           {/* Comment Form */}
           {user && (
             <form onSubmit={handleSubmitComment} className="flex gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary/60 to-primary/40 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-                {user.name?.[0] || user.email?.[0] || "?"}
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
+                {user.image ? (
+                  <img
+                    src={user.image}
+                    alt={user.name || user.email}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/60 to-primary/40 flex items-center justify-center">
+                    {user.name?.[0] || user.email?.[0] || "?"}
+                  </div>
+                )}
               </div>
               <div className="flex-1 flex gap-2">
                 <input
@@ -173,7 +194,6 @@ function PostCard({ post, onLike, onComment, postAuthor }: PostCardProps) {
               </div>
             </form>
           )}
-
           {/* Comments List */}
           {comments?.map((comment: Comment) => (
             <div key={comment._id} className="flex gap-3">
@@ -455,9 +475,7 @@ export default function Feed() {
                 post={post}
                 onLike={handleLike}
                 onComment={handleComment}
-                // For now, we'll need to handle user data separately
-                // This is a simplified version - in production you'd want to
-                // enrich posts with user data
+                postAuthor={post.author}
               />
             ))}
           </div>

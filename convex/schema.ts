@@ -2,6 +2,16 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  users: defineTable({
+    authId: v.string(), // Better Auth user ID from MongoDB
+    name: v.optional(v.string()),
+    email: v.string(),
+    image: v.optional(v.string()),
+    bio: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_auth_id", ["authId"]),
+
   posts: defineTable({
     content: v.string(),
     authorAuthId: v.string(), // Better Auth user ID from MongoDB
