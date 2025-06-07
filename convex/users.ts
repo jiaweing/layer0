@@ -40,6 +40,29 @@ export const upsertUser = mutation({
   },
 });
 
+// Create a new user
+export const createUser = mutation({
+  args: {
+    authId: v.string(),
+    name: v.optional(v.string()),
+    email: v.string(),
+    image: v.optional(v.string()),
+    bio: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await ctx.db.insert("users", {
+      authId: args.authId,
+      name: args.name,
+      email: args.email,
+      image: args.image,
+      bio: args.bio,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    return userId;
+  },
+});
+
 // Get a user by their auth ID
 export const getUserByAuthId = query({
   args: { authId: v.string() },

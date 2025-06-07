@@ -5,6 +5,9 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
 // Export types that components will use
+export { api } from "../../convex/_generated/api";
+export type { Id } from "../../convex/_generated/dataModel";
+
 export interface User {
   _id: string;
   authId: string;

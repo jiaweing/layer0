@@ -98,6 +98,30 @@ export const createPost = mutation({
   },
 });
 
+export const createPostServer = mutation({
+  args: {
+    content: v.string(),
+    authorAuthId: v.string(),
+    imageUrl: v.optional(v.string()),
+    teamId: v.optional(v.string()),
+    organizationId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const postId = await ctx.db.insert("posts", {
+      content: args.content,
+      imageUrl: args.imageUrl,
+      authorAuthId: args.authorAuthId,
+      teamId: args.teamId,
+      organizationId: args.organizationId,
+      createdAt: Date.now(),
+      likesCount: 0,
+      commentsCount: 0,
+    });
+
+    return postId;
+  },
+});
+
 export const getPost = query({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -182,5 +206,42 @@ export const deletePost = mutation({
 
     // Delete the post
     await ctx.db.delete(args.postId);
+  },
+});
+
+export const getPostsByTeam = query({
+  args: {
+    teamId: v.string(),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+    
+    const posts = await ctx.db
+      .query("posts")
+      .filter((q) => q.eq(q.field("teamId"), args.teamId))
+      .order("desc")
+      .paginate({
+        cursor: args.cursor || null,
+        numItems: limit,
+      });
+
+    // Get user data for each post
+    const postsWithUsers = await Promise.all(
+      posts.page.map(async (post) => {
+        const user = await ctx.db
+          .query("users")
+          .withIndex("by_auth_id", (q) => q.eq("authId", post.authorAuthId))
+          .first();
+
+        return {
+          ...post,
+          author: user,
+        };
+      })
+    );
+
+    return postsWithUsers;
   },
 });

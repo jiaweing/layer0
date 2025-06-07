@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authClient } from "@/lib/auth";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { CreateChannelDialog } from "./create-channel-dialog";
 
 interface Channel {
@@ -22,29 +23,29 @@ export function ChannelList({ organizationId }: ChannelListProps) {
   const [teams, setTeams] = useState<Channel[]>([]);
   const [isPending, setIsPending] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadTeams = async () => {
+    try {
+      setIsPending(true);
+      setError(null);
+      const result = await authClient.organization.listTeams({
+        query: {
+          organizationId,
+        },
+      });
+
+      if (result.error) {
+        setError(result.error.message || "Failed to load channels");
+      } else {
+        setTeams((result.data as Channel[]) || []);
+      }
+    } catch (err) {
+      setError("Failed to load channels");
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   useEffect(() => {
-    const loadTeams = async () => {
-      try {
-        setIsPending(true);
-        const result = await authClient.organization.listTeams({
-          query: {
-            organizationId,
-          },
-        });
-
-        if (result.error) {
-          setError(result.error.message || "Failed to load channels");
-        } else {
-          setTeams((result.data as Channel[]) || []);
-        }
-      } catch (err) {
-        setError("Failed to load channels");
-      } finally {
-        setIsPending(false);
-      }
-    };
-
     loadTeams();
   }, [organizationId]);
 
@@ -99,8 +100,7 @@ export function ChannelList({ organizationId }: ChannelListProps) {
           <p className="text-gray-500 mb-4">No channels created yet.</p>
           <Button onClick={() => setShowCreateDialog(true)}>
             Create First Channel
-          </Button>
-        </Card>
+          </Button>        </Card>
       ) : (
         <div className="space-y-2">
           {channels.map((channel: Channel) => (
@@ -108,6 +108,7 @@ export function ChannelList({ organizationId }: ChannelListProps) {
               key={channel.id}
               channel={channel}
               organizationId={organizationId}
+              onChannelDeleted={loadTeams}
             />
           ))}
         </div>
@@ -117,6 +118,7 @@ export function ChannelList({ organizationId }: ChannelListProps) {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         organizationId={organizationId}
+        onChannelCreated={loadTeams}
       />
     </div>
   );
@@ -125,9 +127,11 @@ export function ChannelList({ organizationId }: ChannelListProps) {
 interface ChannelCardProps {
   channel: Channel;
   organizationId: string;
+  onChannelDeleted?: () => void;
 }
 
-function ChannelCard({ channel }: ChannelCardProps) {
+function ChannelCard({ channel, organizationId, onChannelDeleted }: ChannelCardProps) {
+  const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -143,6 +147,7 @@ function ChannelCard({ channel }: ChannelCardProps) {
       await authClient.organization.removeTeam({
         teamId: channel.id,
       });
+      onChannelDeleted?.();
     } catch (error) {
       console.error("Failed to delete channel:", error);
       window.alert("Failed to delete channel. Please try again.");
@@ -152,7 +157,7 @@ function ChannelCard({ channel }: ChannelCardProps) {
   };
 
   const handleViewChannel = () => {
-    window.location.href = `/feed?teamId=${channel.id}`;
+    navigate(`/groups/${organizationId}/channels/${channel.id}`);
   };
 
   return (

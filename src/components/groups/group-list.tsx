@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { authClient } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -133,19 +134,10 @@ interface GroupCardProps {
 }
 
 function GroupCard({ group }: GroupCardProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSetActive = async () => {
-    setIsLoading(true);
-    try {
-      await authClient.organization.setActive({
-        organizationId: group.id,
-      });
-    } catch (error) {
-      console.error("Failed to set active organization:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleEnterGroup = () => {
+    navigate(`/groups/${group.id}`);
   };
 
   return (
@@ -167,14 +159,12 @@ function GroupCard({ group }: GroupCardProps) {
             <h3 className="font-medium">{group.name}</h3>
             <p className="text-sm text-gray-500">@{group.slug}</p>
           </div>
-        </div>
-        <Button
+        </div>        <Button
           variant="outline"
           size="sm"
-          onClick={handleSetActive}
-          disabled={isLoading}
+          onClick={handleEnterGroup}
         >
-          {isLoading ? "Setting..." : "Enter"}
+          Enter
         </Button>
       </div>
     </Card>
