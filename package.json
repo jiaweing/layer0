@@ -1,7 +1,7 @@
 {
-  "name": "layer0-frontend",
+  "name": "layer0",
   "version": "1.0.0",
-  "description": "Layer0 Frontend - Modern full-stack starter kit",
+  "description": "Layer0 - Modern full-stack social platform starter kit",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
